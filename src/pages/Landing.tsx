@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 const STEPS = [
   {
     n: '01',
@@ -56,9 +58,9 @@ export default function Landing() {
             <a href="#team" className="hover:text-ink-900">팀 구성</a>
             <a href="#format" className="hover:text-ink-900">논문 형식</a>
           </nav>
-          <button className="rounded-full bg-ink-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-ink-700">
+          <Link to="/dashboard" className="rounded-full bg-ink-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-ink-700">
             시작하기
-          </button>
+          </Link>
         </div>
       </header>
 
@@ -81,9 +83,9 @@ export default function Landing() {
               초록부터 참고문헌까지, 투고 가능한 상태로 논문을 완성합니다.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-4">
-              <button className="rounded-full bg-gold-500 px-7 py-3 font-medium text-ink-900 shadow-sm transition hover:bg-gold-400">
-                새 논문 시작하기
-              </button>
+              <Link to="/dashboard" className="rounded-full bg-gold-500 px-7 py-3 font-medium text-ink-900 shadow-sm transition hover:bg-gold-400">
+                주제 보고 팀 만들기
+              </Link>
               <a href="#how" className="rounded-full border border-ink-300 px-7 py-3 font-medium text-ink-700 transition hover:border-ink-900">
                 작동 방식 보기
               </a>
@@ -167,9 +169,9 @@ export default function Landing() {
         <div className="mx-auto max-w-3xl px-6 py-24 text-center">
           <h2 className="font-serif text-4xl font-bold">머릿속 주제를 논문으로.</h2>
           <p className="mt-4 text-lg text-ink-600">지금 팀을 꾸리고 첫 초록을 써보세요.</p>
-          <button className="mt-8 rounded-full bg-ink-900 px-8 py-3.5 font-medium text-white transition hover:bg-ink-700">
+          <Link to="/dashboard" className="mt-8 inline-block rounded-full bg-ink-900 px-8 py-3.5 font-medium text-white transition hover:bg-ink-700">
             새 논문 시작하기
-          </button>
+          </Link>
         </div>
       </section>
 
