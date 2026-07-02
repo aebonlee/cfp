@@ -1,0 +1,30 @@
+{
+  "name": "withpaper",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "함께 쓰는 논문 - 사람과 AI가 팀을 이뤄 학술지 게재까지 완성하는 협업 논문 작성 플랫폼",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit",
+    "lint": "tsc -b --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.96.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.13.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.14",
+    "@types/node": "^22.20.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^5.1.1",
+    "tailwindcss": "^4.1.14",
+    "typescript": "~5.8.3",
+    "vite": "^7.3.1"
+  }
+}
