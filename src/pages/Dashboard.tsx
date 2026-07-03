@@ -37,7 +37,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-ink-50">
       <AppHeader />
-      <main className="mx-auto max-w-6xl px-6 py-12">
+      <main className="mx-auto max-w-[1600px] px-6 py-12">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-serif text-3xl font-bold">내 논문</h1>
@@ -75,7 +75,7 @@ export default function Dashboard() {
         {loading ? (
           <p className="mt-16 text-center text-sm text-ink-400">불러오는 중…</p>
         ) : (
-          <div className="mt-8 grid gap-5 md:grid-cols-2">
+          <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {shown.map((p) => (
               <PaperCard key={p.id} paper={p} />
             ))}

@@ -64,7 +64,7 @@ export default function PaperWorkspace() {
   return (
     <div className="min-h-screen bg-ink-50">
       <AppHeader />
-      <main className="mx-auto max-w-5xl px-6 py-10">
+      <main className="mx-auto max-w-[1600px] px-6 py-10">
         <Link to="/dashboard" className="text-sm text-ink-500 hover:text-ink-900">
           ← 내 논문
         </Link>

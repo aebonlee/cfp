@@ -24,14 +24,17 @@ export default function AppHeader() {
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-ink-200/70 bg-ink-50/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2">
             <Logo />
-            <span className="font-serif text-xl font-bold tracking-tight">withpaper</span>
+            <span className="font-serif text-xl font-bold tracking-tight">Call for Papers</span>
           </Link>
           <nav className="flex items-center gap-5 text-sm text-ink-600">
             <Link to="/dashboard" className="hover:text-ink-900">
               내 논문
+            </Link>
+            <Link to="/new" className="hover:text-ink-900">
+              새 논문
             </Link>
             {user ? (
               <div className="flex items-center gap-3">

@@ -69,6 +69,28 @@ export default function SectionEditor({
     setSavedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
   }
 
+  // 제공 주제(seed)의 원본 초안 번호 (sourceFile "NN. ..." → NN)
+  const draftNum = paper.seed && paper.sourceFile ? paper.sourceFile.match(/^(\d+)\./)?.[1] : undefined
+  const [loadingDraft, setLoadingDraft] = useState(false)
+
+  async function loadOriginalDraft() {
+    if (!draftNum) return
+    setLoadingDraft(true)
+    try {
+      const res = await fetch(`${import.meta.env.BASE_URL}topics/${draftNum}.md`)
+      if (res.ok) {
+        const text = (await res.text()).trim()
+        const merged = value.trim() ? `${value}\n\n${text}` : text
+        update(merged)
+        await saveSection(paper.id, current, def.title, merged, userId)
+        setSavedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
+        setMode('review')
+      }
+    } finally {
+      setLoadingDraft(false)
+    }
+  }
+
   async function runAi(role: AiRole) {
     setAiOpen(true)
     setAiLoading(role)
@@ -139,6 +161,15 @@ export default function SectionEditor({
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {draftNum && (
+              <button
+                onClick={loadOriginalDraft}
+                disabled={loadingDraft}
+                className="rounded-full border border-gold-400 bg-gold-500/10 px-4 py-1.5 text-xs font-medium text-gold-600 transition hover:bg-gold-500/20 disabled:opacity-40"
+              >
+                {loadingDraft ? '불러오는 중…' : '📄 원본 초안 불러오기'}
+              </button>
+            )}
             <AiBtn onClick={() => runAi('ai_writer')} loading={aiLoading === 'ai_writer'}>
               AI 집필
             </AiBtn>

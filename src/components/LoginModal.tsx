@@ -11,7 +11,7 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
       <div className="relative w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl">
         <div className="flex flex-col items-center text-center">
           <Logo className="h-10 w-10" />
-          <h2 className="mt-4 font-serif text-2xl font-bold">withpaper 시작하기</h2>
+          <h2 className="mt-4 font-serif text-2xl font-bold">Call for Papers 시작하기</h2>
           <p className="mt-2 text-sm text-ink-500">
             구글 또는 카카오 계정으로 가입·로그인하고<br />팀을 만들어 논문을 함께 쓰세요.
           </p>

@@ -51,7 +51,7 @@ export default function Landing() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
             <Logo />
-            <span className="font-serif text-xl font-bold tracking-tight">withpaper</span>
+            <span className="font-serif text-xl font-bold tracking-tight">Call for Papers</span>
           </div>
           <nav className="hidden items-center gap-8 text-sm text-ink-600 md:flex">
             <a href="#how" className="hover:text-ink-900">작동 방식</a>
@@ -179,7 +179,7 @@ export default function Landing() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-10 text-sm text-ink-500 md:flex-row">
           <div className="flex items-center gap-2">
             <Logo />
-            <span className="font-serif font-bold text-ink-700">withpaper</span>
+            <span className="font-serif font-bold text-ink-700">Call for Papers</span>
           </div>
           <p>© 2026 DreamIT Biz · 함께 쓰는 논문</p>
         </div>

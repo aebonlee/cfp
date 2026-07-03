@@ -1,9 +1,9 @@
 {
-  "name": "withpaper",
+  "name": "cfp",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "함께 쓰는 논문 - 사람과 AI가 팀을 이뤄 학술지 게재까지 완성하는 협업 논문 작성 플랫폼",
+  "description": "Call for Papers - 사람과 AI가 팀을 이뤄 학술지 게재까지 완성하는 협업 논문 작성 플랫폼",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
