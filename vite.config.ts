@@ -15,7 +15,7 @@ function spaFallback() {
   }
 }
 
-// 커스텀 도메인(withpaper.dreamitbiz.com)이므로 base 는 '/'
+// 커스텀 도메인(cfp.dreamitbiz.com)이므로 base 는 '/'
 export default defineConfig({
   plugins: [react(), tailwindcss(), spaFallback()],
   base: '/',

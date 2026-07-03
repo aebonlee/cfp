@@ -2,7 +2,7 @@
 
 사람과 AI가 팀을 이뤄 학술지 게재까지 완성하는 협업 논문 작성 플랫폼.
 
-- 주소: https://withpaper.dreamitbiz.com
+- 주소: https://cfp.dreamitbiz.com
 - 스택: React 19 · Vite 7 · TypeScript · Tailwind v4 · Supabase · GitHub Actions
 - 로그인: 구글 이메일 · 카카오
 - 기능: 주제 등록 · 팀 구성(사람 1~3 + AI 팀원) · 섹션 집필 + AI 집필/검토/교정(Claude) · 단락별 코멘트/리뷰 · 참고문헌 관리 · 공동저자 초대

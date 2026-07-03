@@ -29,4 +29,4 @@ export const TABLES = {
   aiRuns: `${DB_PREFIX}ai_runs`,
 } as const
 
-export const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://withpaper.dreamitbiz.com'
+export const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://cfp.dreamitbiz.com'
