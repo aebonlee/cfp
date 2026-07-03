@@ -1,15 +1,38 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
 import TeamBuilder from '../components/TeamBuilder'
 import SectionEditor from '../components/SectionEditor'
-import { getPaper, setTeam } from '../lib/store'
-import { FORMAT_LABEL, ROLE_LABEL, STATUS_LABEL, type TeamMember } from '../types'
+import { loadPaper, saveTeam } from '../lib/papers'
+import { useAuth } from '../lib/auth'
+import { FORMAT_LABEL, ROLE_LABEL, STATUS_LABEL, type Paper, type TeamMember } from '../types'
 
 export default function PaperWorkspace() {
   const { id } = useParams()
-  const [paper, setPaper] = useState(() => (id ? getPaper(id) : undefined))
+  const { user } = useAuth()
+  const [paper, setPaper] = useState<Paper | undefined>(undefined)
+  const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'team' | 'outline'>('team')
+
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    loadPaper(id!, user?.id)
+      .then((p) => alive && setPaper(p))
+      .finally(() => alive && setLoading(false))
+    return () => {
+      alive = false
+    }
+  }, [id, user?.id])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-ink-50">
+        <AppHeader />
+        <p className="py-24 text-center text-sm text-ink-400">불러오는 중…</p>
+      </div>
+    )
+  }
 
   if (!paper) {
     return (
@@ -25,10 +48,10 @@ export default function PaperWorkspace() {
     )
   }
 
-  function handleSaveTeam(members: TeamMember[]) {
+  async function handleSaveTeam(members: TeamMember[]) {
     if (!paper) return
-    setTeam(paper.id, members)
-    setPaper(getPaper(paper.id))
+    await saveTeam(paper.id, members, user?.id)
+    setPaper(await loadPaper(paper.id, user?.id))
     setTab('outline')
   }
 
@@ -108,7 +131,7 @@ export default function PaperWorkspace() {
               먼저 <b>팀 구성</b> 탭에서 팀을 만들면 섹션별 집필과 AI 집필·검토·교정을 시작할 수 있습니다.
             </div>
           ) : (
-            <SectionEditor paper={paper} />
+            <SectionEditor paper={paper} userId={user?.id} />
           )}
         </div>
       </main>

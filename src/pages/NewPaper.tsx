@@ -1,27 +1,35 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
-import { createPaper } from '../lib/store'
+import { createPaper } from '../lib/papers'
+import { useAuth } from '../lib/auth'
 import { FORMAT_LABEL, type PaperFormat } from '../types'
 
 export default function NewPaper() {
   const nav = useNavigate()
+  const { user } = useAuth()
   const [title, setTitle] = useState('')
   const [summary, setSummary] = useState('')
   const [keywords, setKeywords] = useState('')
   const [format, setFormat] = useState<PaperFormat>('kci')
+  const [saving, setSaving] = useState(false)
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!title.trim()) return
-    const paper = createPaper({
-      title: title.trim(),
-      summary: summary.trim(),
-      keywords: keywords.split(',').map((k) => k.trim()).filter(Boolean),
-      format,
-      lang: format === 'imrad' ? 'en' : 'ko',
-    })
-    nav(`/paper/${paper.id}`)
+    if (!title.trim() || saving) return
+    setSaving(true)
+    const paper = await createPaper(
+      {
+        title: title.trim(),
+        summary: summary.trim(),
+        keywords: keywords.split(',').map((k) => k.trim()).filter(Boolean),
+        format,
+        lang: format === 'imrad' ? 'en' : 'ko',
+      },
+      user?.id,
+    )
+    if (paper) nav(`/paper/${paper.id}`)
+    else setSaving(false)
   }
 
   return (
@@ -82,10 +90,10 @@ export default function NewPaper() {
 
           <button
             type="submit"
-            disabled={!title.trim()}
+            disabled={!title.trim() || saving}
             className="w-full rounded-full bg-ink-900 py-3.5 font-medium text-white transition hover:bg-ink-700 disabled:opacity-40"
           >
-            주제 등록하고 팀 구성하기 →
+            {saving ? '등록 중…' : '주제 등록하고 팀 구성하기 →'}
           </button>
         </form>
       </main>

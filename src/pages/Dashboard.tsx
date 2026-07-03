@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
-import { getPapers } from '../lib/store'
+import { loadPapers } from '../lib/papers'
+import { useAuth } from '../lib/auth'
 import { STATUS_LABEL, type Paper, type PaperStatus } from '../types'
 
 const STATUS_STYLE: Record<PaperStatus, string> = {
@@ -14,10 +15,23 @@ const STATUS_STYLE: Record<PaperStatus, string> = {
 }
 
 export default function Dashboard() {
-  const papers = getPapers()
-  const clusters = useMemo(() => ['전체', ...Array.from(new Set(papers.map((p) => p.cluster)))], [papers])
+  const { user } = useAuth()
+  const [papers, setPapers] = useState<Paper[]>([])
+  const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('전체')
 
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    loadPapers(user?.id)
+      .then((list) => alive && setPapers(list))
+      .finally(() => alive && setLoading(false))
+    return () => {
+      alive = false
+    }
+  }, [user?.id])
+
+  const clusters = useMemo(() => ['전체', ...Array.from(new Set(papers.map((p) => p.cluster)))], [papers])
   const shown = filter === '전체' ? papers : papers.filter((p) => p.cluster === filter)
 
   return (
@@ -29,6 +43,9 @@ export default function Dashboard() {
             <h1 className="font-serif text-3xl font-bold">내 논문</h1>
             <p className="mt-2 text-ink-600">
               등록된 주제 {papers.length}편 · 주제를 골라 팀을 구성하고 게재까지 함께 완성하세요.
+              <span className="ml-2 text-xs text-ink-400">
+                {user ? '☁ Supabase에 저장됨' : '이 브라우저에 저장됨 · 로그인하면 클라우드 저장'}
+              </span>
             </p>
           </div>
           <Link
@@ -55,11 +72,15 @@ export default function Dashboard() {
         </div>
 
         {/* 주제 카드 */}
-        <div className="mt-8 grid gap-5 md:grid-cols-2">
-          {shown.map((p) => (
-            <PaperCard key={p.id} paper={p} />
-          ))}
-        </div>
+        {loading ? (
+          <p className="mt-16 text-center text-sm text-ink-400">불러오는 중…</p>
+        ) : (
+          <div className="mt-8 grid gap-5 md:grid-cols-2">
+            {shown.map((p) => (
+              <PaperCard key={p.id} paper={p} />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   )

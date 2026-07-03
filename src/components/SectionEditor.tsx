@@ -1,17 +1,25 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Paper } from '../types'
 import { sectionsFor } from '../data/sections'
-import { getSectionContent, setSectionContent } from '../lib/store'
+import { loadSections, saveSection } from '../lib/papers'
 import { requestAi, type AiRole } from '../lib/ai'
 
-export default function SectionEditor({ paper }: { paper: Paper }) {
+export default function SectionEditor({ paper, userId }: { paper: Paper; userId?: string }) {
   const sections = useMemo(() => sectionsFor(paper.format), [paper.format])
-  const [content, setContent] = useState<Record<string, string>>(() => getSectionContent(paper.id))
+  const [content, setContent] = useState<Record<string, string>>({})
   const [current, setCurrent] = useState(sections[0].kind)
   const [aiOpen, setAiOpen] = useState(false)
   const [aiLoading, setAiLoading] = useState<AiRole | null>(null)
   const [aiText, setAiText] = useState('')
   const [savedAt, setSavedAt] = useState<string | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    loadSections(paper.id, userId).then((c) => alive && setContent(c))
+    return () => {
+      alive = false
+    }
+  }, [paper.id, userId])
 
   const def = sections.find((s) => s.kind === current)!
   const value = content[current] ?? ''
@@ -20,8 +28,8 @@ export default function SectionEditor({ paper }: { paper: Paper }) {
     setContent((c) => ({ ...c, [current]: v }))
   }
 
-  function save() {
-    setSectionContent(paper.id, current, content[current] ?? '')
+  async function save() {
+    await saveSection(paper.id, current, def.title, content[current] ?? '', userId)
     setSavedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
   }
 
