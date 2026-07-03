@@ -67,6 +67,7 @@ export default function Landing() {
               논문 아이디어 또는 주제만 정하면 바로 논문 작성이 시작됩니다.
               <br />
               사람 1~3인과 AI 팀원이 한 팀이 되어 초록부터 참고문헌까지,
+              <br />
               투고 가능한 상태로 논문을 완성합니다.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-4">
