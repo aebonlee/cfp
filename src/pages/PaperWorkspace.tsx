@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
 import TeamBuilder from '../components/TeamBuilder'
 import SectionEditor from '../components/SectionEditor'
+import ReferencesPanel from '../components/ReferencesPanel'
 import { loadPaper, saveTeam } from '../lib/papers'
 import { useAuth } from '../lib/auth'
 import { FORMAT_LABEL, ROLE_LABEL, STATUS_LABEL, type Paper, type TeamMember } from '../types'
@@ -12,7 +13,7 @@ export default function PaperWorkspace() {
   const { user } = useAuth()
   const [paper, setPaper] = useState<Paper | undefined>(undefined)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'team' | 'outline'>('team')
+  const [tab, setTab] = useState<'team' | 'outline' | 'refs'>('team')
 
   useEffect(() => {
     let alive = true
@@ -125,11 +126,16 @@ export default function PaperWorkspace() {
           <TabBtn active={tab === 'outline'} onClick={() => setTab('outline')}>
             집필 · 논문 구성
           </TabBtn>
+          <TabBtn active={tab === 'refs'} onClick={() => setTab('refs')}>
+            참고문헌
+          </TabBtn>
         </div>
 
         <div className="mt-8">
           {tab === 'team' ? (
             <TeamBuilder initial={paper.members} onSave={handleSaveTeam} />
+          ) : tab === 'refs' ? (
+            <ReferencesPanel paper={paper} userId={user?.id} />
           ) : paper.members.length === 0 ? (
             <div className="rounded-xl border border-dashed border-gold-400 bg-gold-500/5 p-6 text-center text-sm text-ink-600">
               먼저 <b>팀 구성</b> 탭에서 팀을 만들면 섹션별 집필과 AI 집필·검토·교정을 시작할 수 있습니다.

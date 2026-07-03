@@ -46,3 +46,8 @@ export async function requestAi(req: AiRequest): Promise<AiResponse> {
   }
   return data as AiResponse
 }
+
+/** 러프한 참고문헌 목록을 APA/KCI 형식으로 정리(에디터 역할 재사용) */
+export async function formatReferences(paper: Paper, raw: string): Promise<AiResponse> {
+  return requestAi({ role: 'ai_editor', section: '참고문헌', paper, draft: raw })
+}

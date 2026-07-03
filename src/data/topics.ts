@@ -1,9 +1,12 @@
 import type { Paper } from '../types'
 
 // 사용자가 제공한 10편의 연구 주제(Notion 익스포트 → reference/topics)를
-// 논문 프로젝트 시드로 등록한다. 각 주제는 팀 구성이 가능한 상태(status: 'topic').
+// 논문 프로젝트 시드로 등록한다. 제공 주제는 모두 이애본을 제1저자로 배정한다.
 
-export const SEED_TOPICS: Paper[] = [
+// 이애본 제1저자 기본 팀원
+export const LEAD_AUTHOR = { name: '이애본', role: 'first_author' as const, type: 'human' as const }
+
+const RAW_SEEDS: Paper[] = [
   {
     id: 'seed-01',
     title: 'AHP를 이용한 경영성과 측정 유형별 평가지표의 중요도 분석',
@@ -158,3 +161,9 @@ export const SEED_TOPICS: Paper[] = [
     createdAt: '2026-07-02',
   },
 ]
+
+// 모든 제공 주제에 이애본 제1저자를 기본 팀원으로 주입
+export const SEED_TOPICS: Paper[] = RAW_SEEDS.map((p) => ({
+  ...p,
+  members: [{ id: `${p.id}-lead`, ...LEAD_AUTHOR }],
+}))

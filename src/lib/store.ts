@@ -1,4 +1,4 @@
-import type { Paper, TeamMember } from '../types'
+import type { Paper, TeamMember, Reference } from '../types'
 import { SEED_TOPICS } from '../data/topics'
 
 // 논문 프로젝트 로컬 스토어.
@@ -109,6 +109,44 @@ function saveSections(s: SectionStore) {
 
 export function getSectionContent(paperId: string): Record<string, string> {
   return loadSections()[paperId] ?? {}
+}
+
+// ---- 참고문헌 (localStorage) ----
+const REF_KEY = 'withpaper.refs.v1'
+
+function loadRefs(): Record<string, Reference[]> {
+  try {
+    return JSON.parse(localStorage.getItem(REF_KEY) || '{}') as Record<string, Reference[]>
+  } catch {
+    return {}
+  }
+}
+function saveRefs(r: Record<string, Reference[]>) {
+  try {
+    localStorage.setItem(REF_KEY, JSON.stringify(r))
+  } catch {
+    /* 무시 */
+  }
+}
+export function getReferences(paperId: string): Reference[] {
+  return loadRefs()[paperId] ?? []
+}
+export function addReference(paperId: string, apa: string): Reference {
+  const ref: Reference = { id: `ref-${Date.now()}-${Math.floor(Math.random() * 1e4)}`, apa }
+  const all = loadRefs()
+  all[paperId] = [...(all[paperId] ?? []), ref]
+  saveRefs(all)
+  return ref
+}
+export function updateReference(paperId: string, id: string, apa: string) {
+  const all = loadRefs()
+  all[paperId] = (all[paperId] ?? []).map((r) => (r.id === id ? { ...r, apa } : r))
+  saveRefs(all)
+}
+export function deleteReference(paperId: string, id: string) {
+  const all = loadRefs()
+  all[paperId] = (all[paperId] ?? []).filter((r) => r.id !== id)
+  saveRefs(all)
 }
 
 export function setSectionContent(paperId: string, kind: string, content: string) {

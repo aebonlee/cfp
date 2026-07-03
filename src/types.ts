@@ -41,6 +41,13 @@ export interface Paper {
   shared?: boolean // 다른 사람이 나를 공동저자로 초대한 논문
 }
 
+/** 참고문헌 항목 */
+export interface Reference {
+  id: string
+  apa: string // 서지 정보(APA/KCI 형식 텍스트)
+  citationKey?: string
+}
+
 export const ROLE_LABEL: Record<MemberRole, string> = {
   first_author: '제1저자',
   corresponding: '교신저자',
