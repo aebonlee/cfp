@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
 import { createPaper } from '../lib/papers'
+import { setPresetId } from '../lib/store'
+import { PRESETS, findPreset } from '../data/presets'
 import { useAuth } from '../lib/auth'
 import { FORMAT_LABEL, type PaperFormat } from '../types'
 
@@ -11,8 +13,11 @@ export default function NewPaper() {
   const [title, setTitle] = useState('')
   const [summary, setSummary] = useState('')
   const [keywords, setKeywords] = useState('')
-  const [format, setFormat] = useState<PaperFormat>('kci')
+  const [presetId, setPreset] = useState<string>('')
   const [saving, setSaving] = useState(false)
+
+  const preset = findPreset(presetId)
+  const format: PaperFormat = preset?.format ?? 'kci'
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -24,12 +29,14 @@ export default function NewPaper() {
         summary: summary.trim(),
         keywords: keywords.split(',').map((k) => k.trim()).filter(Boolean),
         format,
-        lang: format === 'imrad' ? 'en' : 'ko',
+        lang: preset?.lang ?? 'ko',
       },
       user?.id,
     )
-    if (paper) nav(`/paper/${paper.id}`)
-    else setSaving(false)
+    if (paper) {
+      if (presetId) setPresetId(paper.id, presetId)
+      nav(`/paper/${paper.id}`)
+    } else setSaving(false)
   }
 
   return (
@@ -68,24 +75,28 @@ export default function NewPaper() {
             />
           </Field>
 
-          <Field label="논문 형식">
+          <Field label="투고 양식 (저널 프리셋)">
             <div className="grid gap-3 sm:grid-cols-2">
-              {(['kci', 'imrad'] as PaperFormat[]).map((f) => (
+              {PRESETS.map((p) => (
                 <button
                   type="button"
-                  key={f}
-                  onClick={() => setFormat(f)}
+                  key={p.id}
+                  onClick={() => setPreset(presetId === p.id ? '' : p.id)}
                   className={`rounded-xl border p-4 text-left transition ${
-                    format === f ? 'border-gold-500 bg-gold-500/10' : 'border-ink-200 bg-white hover:border-gold-400'
+                    presetId === p.id ? 'border-gold-500 bg-gold-500/10' : 'border-ink-200 bg-white hover:border-gold-400'
                   }`}
                 >
-                  <div className="text-sm font-bold">{FORMAT_LABEL[f]}</div>
-                  <div className="mt-1 text-xs text-ink-500">
-                    {f === 'kci' ? '국문초록·서론·이론적배경·연구방법·결과·논의·결론' : 'Abstract·Intro·Methods·Results·Discussion'}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold">{p.name}</span>
+                    <span className="text-[11px] text-ink-400">{FORMAT_LABEL[p.format].split(' ')[0]}</span>
                   </div>
+                  <div className="mt-1 text-xs text-ink-500">{p.desc} · 인용 {p.citation}</div>
                 </button>
               ))}
             </div>
+            <p className="mt-2 text-xs text-ink-400">
+              {preset ? preset.guide : '선택하지 않으면 KCI 표준 양식으로 시작합니다.'}
+            </p>
           </Field>
 
           <button

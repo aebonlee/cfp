@@ -1,12 +1,19 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Comment, Paper, Reference } from '../types'
 import { ROLE_LABEL } from '../types'
-import { sectionsFor } from '../data/sections'
+import type { SectionDef } from '../data/sections'
 import { loadSections, loadReferences, loadComments } from '../lib/papers'
 import { buildCitationReport } from '../lib/citations'
 
-export default function SubmissionPanel({ paper, userId }: { paper: Paper; userId?: string }) {
-  const sectionDefs = useMemo(() => sectionsFor(paper.format), [paper.format])
+export default function SubmissionPanel({
+  paper,
+  userId,
+  sections: sectionDefs,
+}: {
+  paper: Paper
+  userId?: string
+  sections: SectionDef[]
+}) {
   const [content, setContent] = useState<Record<string, string>>({})
   const [refs, setRefs] = useState<Reference[]>([])
   const [comments, setComments] = useState<Comment[]>([])

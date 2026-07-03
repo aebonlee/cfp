@@ -169,6 +169,26 @@ function saveComments(c: Record<string, Comment[]>) {
 export function getComments(paperId: string): Comment[] {
   return loadComments()[paperId] ?? []
 }
+
+// ---- 투고 양식 프리셋 (localStorage, 논문별) ----
+const PRESET_KEY = 'withpaper.presets.v1'
+export function getPresetId(paperId: string): string | undefined {
+  try {
+    const all = JSON.parse(localStorage.getItem(PRESET_KEY) || '{}') as Record<string, string>
+    return all[paperId]
+  } catch {
+    return undefined
+  }
+}
+export function setPresetId(paperId: string, presetId: string) {
+  try {
+    const all = JSON.parse(localStorage.getItem(PRESET_KEY) || '{}') as Record<string, string>
+    all[paperId] = presetId
+    localStorage.setItem(PRESET_KEY, JSON.stringify(all))
+  } catch {
+    /* 무시 */
+  }
+}
 export function addComment(
   paperId: string,
   sectionKind: string,

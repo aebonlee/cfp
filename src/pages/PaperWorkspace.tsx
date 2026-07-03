@@ -7,6 +7,9 @@ import ReferencesPanel from '../components/ReferencesPanel'
 import SubmissionPanel from '../components/SubmissionPanel'
 import IntegrityPanel from '../components/IntegrityPanel'
 import { loadPaper, saveTeam } from '../lib/papers'
+import { getPresetId, setPresetId } from '../lib/store'
+import { PRESETS, findPreset } from '../data/presets'
+import { resolveSections } from '../data/sections'
 import { useAuth } from '../lib/auth'
 import { FORMAT_LABEL, ROLE_LABEL, STATUS_LABEL, type Paper, type TeamMember } from '../types'
 
@@ -16,6 +19,7 @@ export default function PaperWorkspace() {
   const [paper, setPaper] = useState<Paper | undefined>(undefined)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'team' | 'outline' | 'refs' | 'integrity' | 'submit'>('team')
+  const [presetId, setPreset] = useState<string | undefined>(() => (id ? getPresetId(id) : undefined))
 
   useEffect(() => {
     let alive = true
@@ -62,6 +66,8 @@ export default function PaperWorkspace() {
   const ais = paper.members.filter((m) => m.type === 'ai')
   const authorName =
     user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '이애본'
+  const preset = findPreset(presetId)
+  const sections = resolveSections(preset?.format ?? paper.format, preset?.sections)
 
   return (
     <div className="min-h-screen bg-ink-50">
@@ -88,10 +94,31 @@ export default function PaperWorkspace() {
           <h1 className="mt-3 font-serif text-2xl font-bold leading-snug">{paper.title}</h1>
           {paper.titleEn && <p className="mt-1 text-sm italic text-ink-400">{paper.titleEn}</p>}
           <p className="mt-4 leading-relaxed text-ink-600">{paper.summary}</p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <span className="rounded-lg border border-ink-200 px-3 py-1 text-xs text-ink-600">
-              {FORMAT_LABEL[paper.format]}
-            </span>
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            <label className="inline-flex items-center gap-2 rounded-lg border border-ink-200 px-3 py-1 text-xs text-ink-600">
+              투고 양식
+              <select
+                value={presetId ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setPreset(v || undefined)
+                  if (v) setPresetId(paper.id, v)
+                }}
+                className="bg-transparent font-medium text-ink-800 outline-none"
+              >
+                <option value="">{FORMAT_LABEL[paper.format]} (기본)</option>
+                {PRESETS.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {preset && (
+              <span className="rounded-lg bg-gold-500/10 px-3 py-1 text-xs text-gold-600" title={preset.guide}>
+                인용 {preset.citation}
+              </span>
+            )}
             {paper.method && (
               <span className="rounded-lg border border-ink-200 px-3 py-1 text-xs text-ink-600">
                 방법론 · {paper.method}
@@ -147,15 +174,15 @@ export default function PaperWorkspace() {
           ) : tab === 'refs' ? (
             <ReferencesPanel paper={paper} userId={user?.id} />
           ) : tab === 'integrity' ? (
-            <IntegrityPanel paper={paper} userId={user?.id} />
+            <IntegrityPanel paper={paper} userId={user?.id} sections={sections} />
           ) : tab === 'submit' ? (
-            <SubmissionPanel paper={paper} userId={user?.id} />
+            <SubmissionPanel paper={paper} userId={user?.id} sections={sections} />
           ) : paper.members.length === 0 ? (
             <div className="rounded-xl border border-dashed border-gold-400 bg-gold-500/5 p-6 text-center text-sm text-ink-600">
               먼저 <b>팀 구성</b> 탭에서 팀을 만들면 섹션별 집필과 AI 집필·검토·교정을 시작할 수 있습니다.
             </div>
           ) : (
-            <SectionEditor paper={paper} userId={user?.id} userName={authorName} />
+            <SectionEditor paper={paper} userId={user?.id} userName={authorName} sections={sections} />
           )}
         </div>
       </main>

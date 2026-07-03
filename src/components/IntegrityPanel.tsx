@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Paper } from '../types'
-import { sectionsFor } from '../data/sections'
+import type { SectionDef } from '../data/sections'
 import { loadSections } from '../lib/papers'
 import { checkIntegrity } from '../lib/ai'
 import { findInternalDuplicates, internalDuplicationRate } from '../lib/similarity'
 
-export default function IntegrityPanel({ paper, userId }: { paper: Paper; userId?: string }) {
-  const sectionDefs = useMemo(() => sectionsFor(paper.format), [paper.format])
+export default function IntegrityPanel({
+  paper,
+  userId,
+  sections: sectionDefs,
+}: {
+  paper: Paper
+  userId?: string
+  sections: SectionDef[]
+}) {
   const [content, setContent] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [aiLoading, setAiLoading] = useState(false)

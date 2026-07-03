@@ -31,3 +31,8 @@ const IMRAD: SectionDef[] = [
 export function sectionsFor(format: PaperFormat): SectionDef[] {
   return format === 'imrad' ? IMRAD : KCI
 }
+
+/** 프리셋이 지정되면 프리셋 섹션, 아니면 format 기본 섹션 */
+export function resolveSections(format: PaperFormat, presetSections?: SectionDef[]): SectionDef[] {
+  return presetSections && presetSections.length > 0 ? presetSections : sectionsFor(format)
+}

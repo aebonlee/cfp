@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Comment, Paper, Reference } from '../types'
-import { sectionsFor } from '../data/sections'
+import type { SectionDef } from '../data/sections'
 import {
   loadSections,
   saveSection,
@@ -17,12 +17,13 @@ export default function SectionEditor({
   paper,
   userId,
   userName = '작성자',
+  sections,
 }: {
   paper: Paper
   userId?: string
   userName?: string
+  sections: SectionDef[]
 }) {
-  const sections = useMemo(() => sectionsFor(paper.format), [paper.format])
   const [content, setContent] = useState<Record<string, string>>({})
   const [current, setCurrent] = useState(sections[0].kind)
   const [mode, setMode] = useState<'edit' | 'review'>('edit')
@@ -45,8 +46,13 @@ export default function SectionEditor({
     }
   }, [paper.id, userId])
 
-  const def = sections.find((s) => s.kind === current)!
-  const value = content[current] ?? ''
+  // 프리셋 변경으로 현재 섹션이 사라지면 첫 섹션으로
+  useEffect(() => {
+    if (!sections.some((s) => s.kind === current)) setCurrent(sections[0].kind)
+  }, [sections, current])
+
+  const def = sections.find((s) => s.kind === current) ?? sections[0]
+  const value = content[def.kind] ?? ''
 
   // 코멘트 헬퍼
   function commentsFor(anchor: string) {
