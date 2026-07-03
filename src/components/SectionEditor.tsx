@@ -12,6 +12,7 @@ import {
 } from '../lib/papers'
 import { requestAi, type AiRole } from '../lib/ai'
 import { getHistory, pushHistory, type Snapshot } from '../lib/store'
+import { renderMarkdownBlock } from '../lib/markdown'
 import CommentThread from './CommentThread'
 
 export default function SectionEditor({
@@ -417,7 +418,7 @@ function ReviewView({
           <div key={anchor} className="group rounded-xl border border-ink-200 bg-white p-4">
             <div className="flex items-start gap-3">
               <span className="mt-1 shrink-0 text-xs text-ink-300">¶{i + 1}</span>
-              <p className="flex-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-800">{p}</p>
+              <div className="cfp-md min-w-0 flex-1" dangerouslySetInnerHTML={{ __html: renderMarkdownBlock(p) }} />
             </div>
             <div className="mt-2 pl-7">
               <CommentThread

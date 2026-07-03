@@ -4,6 +4,7 @@ import { ROLE_LABEL } from '../types'
 import type { SectionDef } from '../data/sections'
 import { loadSections, loadReferences, loadComments } from '../lib/papers'
 import { buildCitationReport } from '../lib/citations'
+import { renderMarkdown } from '../lib/markdown'
 
 export default function SubmissionPanel({
   paper,
@@ -90,12 +91,13 @@ export default function SubmissionPanel({
   function buildHtml() {
     const esc = (t: string) =>
       t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // 이미지 상대경로(/topics/...)를 절대 URL 로 (출력본에서 이미지 표시)
+    const abs = (html: string) =>
+      html.replace(/(src=")(\/topics\/)/g, `$1${window.location.origin}$2`)
     const secs = sectionDefs
       .map((s) => {
-        const body = esc((content[s.kind] ?? '').trim() || '(작성 예정)')
-          .split(/\n\s*\n/)
-          .map((p) => `<p>${p.replace(/\n/g, '<br/>')}</p>`)
-          .join('')
+        const c = (content[s.kind] ?? '').trim()
+        const body = c ? abs(renderMarkdown(c)) : '<p>(작성 예정)</p>'
         return `<h2>${esc(s.title)}</h2>${body}`
       })
       .join('')
@@ -110,7 +112,13 @@ export default function SubmissionPanel({
   .authors{text-align:center;color:#334155;margin-bottom:4px}
   .kw{text-align:center;color:#64748b;font-size:14px;margin-bottom:32px}
   h2{font-size:18px;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-top:28px}
+  h3{font-size:16px;margin-top:18px}
   ol li{margin-bottom:6px}
+  img{max-width:100%;height:auto;border-radius:8px;border:1px solid #e2e8f0;margin:8px 0}
+  table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
+  th,td{border:1px solid #e2e8f0;padding:6px 8px;text-align:left}
+  th{background:#f1f5f9}
+  blockquote{border-left:3px solid #fbbf24;padding-left:12px;color:#475569}
   @media print{body{margin:0}}
 </style></head><body>
 <h1>${esc(paper.title)}</h1>
@@ -249,9 +257,11 @@ ${secs}${refsHtml}
             {sectionDefs.map((s) => (
               <section key={s.kind}>
                 <h2 className="border-b border-ink-100 pb-1 font-serif text-lg font-bold">{s.title}</h2>
-                <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-700">
-                  {(content[s.kind] ?? '').trim() || <span className="text-ink-300">(작성 예정)</span>}
-                </p>
+                {(content[s.kind] ?? '').trim() ? (
+                  <div className="cfp-md mt-2" dangerouslySetInnerHTML={{ __html: renderMarkdown(content[s.kind]) }} />
+                ) : (
+                  <p className="mt-2 text-sm text-ink-300">(작성 예정)</p>
+                )}
               </section>
             ))}
             {refs.length > 0 && (
