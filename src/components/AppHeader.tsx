@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../lib/auth'
+import LoginModal from './LoginModal'
 
 export function Logo({ className = 'h-7 w-7' }: { className?: string }) {
   return (
@@ -13,25 +16,45 @@ export function Logo({ className = 'h-7 w-7' }: { className?: string }) {
 }
 
 export default function AppHeader() {
+  const { user, signOut } = useAuth()
+  const [loginOpen, setLoginOpen] = useState(false)
+
+  const name = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0]
+
   return (
-    <header className="sticky top-0 z-20 border-b border-ink-200/70 bg-ink-50/80 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link to="/" className="flex items-center gap-2">
-          <Logo />
-          <span className="font-serif text-xl font-bold tracking-tight">withpaper</span>
-        </Link>
-        <nav className="flex items-center gap-6 text-sm text-ink-600">
-          <Link to="/dashboard" className="hover:text-ink-900">
-            내 논문
+    <>
+      <header className="sticky top-0 z-20 border-b border-ink-200/70 bg-ink-50/80 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <Link to="/" className="flex items-center gap-2">
+            <Logo />
+            <span className="font-serif text-xl font-bold tracking-tight">withpaper</span>
           </Link>
-          <Link
-            to="/dashboard"
-            className="rounded-full bg-ink-900 px-5 py-2 font-medium text-white transition hover:bg-ink-700"
-          >
-            새 논문 시작
-          </Link>
-        </nav>
-      </div>
-    </header>
+          <nav className="flex items-center gap-5 text-sm text-ink-600">
+            <Link to="/dashboard" className="hover:text-ink-900">
+              내 논문
+            </Link>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <span className="hidden text-ink-700 sm:inline">{name}님</span>
+                <button
+                  onClick={signOut}
+                  className="rounded-full border border-ink-300 px-4 py-2 font-medium text-ink-700 transition hover:border-ink-900"
+                >
+                  로그아웃
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setLoginOpen(true)}
+                className="rounded-full bg-ink-900 px-5 py-2 font-medium text-white transition hover:bg-ink-700"
+              >
+                로그인 / 가입
+              </button>
+            )}
+          </nav>
+        </div>
+      </header>
+      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+    </>
   )
 }

@@ -1,0 +1,39 @@
+
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#1e293b"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.85" cy="0.15" r="0.5">
+      <stop offset="0" stop-color="#f59e0b" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      .brand { font-family: "Noto Serif KR","Apple SD Gothic Neo","Nanum Myeongjo",serif; }
+      .sans  { font-family: "Noto Sans KR","Apple SD Gothic Neo","AppleGothic",sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- 로고 마크 -->
+  <g transform="translate(96,150) scale(2.6)">
+    <rect width="32" height="32" rx="7" fill="#0b1220"/>
+    <path d="M8 7h11a5 5 0 0 1 5 5v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z" fill="#f8fafc"/>
+    <path d="M11 13h8M11 17h8M11 21h5" stroke="#0f172a" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="24" cy="9" r="5" fill="#f59e0b"/>
+    <path d="M24 6.6v4.8M21.6 9h4.8" stroke="#0f172a" stroke-width="1.4" stroke-linecap="round"/>
+  </g>
+
+  <text x="188" y="238" class="brand" font-size="76" font-weight="700" fill="#f8fafc">withpaper</text>
+
+  <text x="98" y="360" class="brand" font-size="66" font-weight="700" fill="#ffffff">함께 쓰는 논문, <tspan fill="#fbbf24">게재</tspan>까지 함께.</text>
+
+  <text x="100" y="428" class="sans" font-size="32" fill="#cbd5e1">주제만 던지면, 사람 1~3인과 AI 팀원이 한 팀이 되어</text>
+  <text x="100" y="472" class="sans" font-size="32" fill="#cbd5e1">초록부터 참고문헌까지 학술지 게재를 준비합니다.</text>
+
+  <rect x="100" y="536" width="14" height="14" rx="3" fill="#f59e0b"/>
+  <text x="126" y="549" class="sans" font-size="26" font-weight="500" fill="#94a3b8">withpaper.dreamitbiz.com</text>
+</svg>

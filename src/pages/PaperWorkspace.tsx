@@ -3,7 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
 import TeamBuilder from '../components/TeamBuilder'
 import { getPaper, setTeam } from '../lib/store'
-import { FORMAT_LABEL, ROLE_LABEL, STATUS_LABEL, type TeamMember } from '../types'
+import { requestAi } from '../lib/ai'
+import { FORMAT_LABEL, ROLE_LABEL, STATUS_LABEL, type Paper, type TeamMember } from '../types'
 
 const KCI_SECTIONS = ['국문초록', '서론', '이론적 배경', '연구방법', '연구결과', '논의', '결론', '참고문헌']
 const IMRAD_SECTIONS = ['Abstract', 'Introduction', 'Related Work', 'Methods', 'Results', 'Discussion', 'Conclusion', 'References']
@@ -108,7 +109,7 @@ export default function PaperWorkspace() {
           {tab === 'team' ? (
             <TeamBuilder initial={paper.members} onSave={handleSaveTeam} />
           ) : (
-            <Outline sections={sections} teamReady={paper.members.length > 0} />
+            <Outline paper={paper} sections={sections} teamReady={paper.members.length > 0} />
           )}
         </div>
       </main>
@@ -129,7 +130,20 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
   )
 }
 
-function Outline({ sections, teamReady }: { sections: string[]; teamReady: boolean }) {
+function Outline({ paper, sections, teamReady }: { paper: Paper; sections: string[]; teamReady: boolean }) {
+  const [active, setActive] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState('')
+
+  async function requestDraft(section: string) {
+    setActive(section)
+    setLoading(true)
+    setResult('')
+    const res = await requestAi({ role: 'ai_writer', section, paper })
+    setResult(res.text)
+    setLoading(false)
+  }
+
   return (
     <div>
       {!teamReady && (
@@ -145,17 +159,35 @@ function Outline({ sections, teamReady }: { sections: string[]; teamReady: boole
             </span>
             <span className="flex-1 font-medium">{s}</span>
             <button
-              disabled={!teamReady}
+              disabled={!teamReady || loading}
+              onClick={() => requestDraft(s)}
               className="rounded-full border border-ink-300 px-4 py-1.5 text-xs font-medium text-ink-700 transition hover:border-gold-500 hover:text-gold-600 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              AI 초안 요청
+              {loading && active === s ? '작성 중…' : 'AI 초안 요청'}
             </button>
           </div>
         ))}
       </div>
-      <p className="mt-6 text-center text-xs text-ink-400">
-        섹션 에디터와 AI 초안 생성(Claude 연동)은 다음 단계에서 연결됩니다.
-      </p>
+
+      {active && (
+        <div className="mt-6 rounded-2xl border border-ink-200 bg-white p-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h4 className="font-bold">
+              「{active}」 AI 초안 <span className="text-sm font-normal text-ink-400">· Claude</span>
+            </h4>
+            <button onClick={() => setActive(null)} className="text-sm text-ink-400 hover:text-ink-700">
+              닫기
+            </button>
+          </div>
+          {loading ? (
+            <p className="py-8 text-center text-sm text-ink-400">AI 팀원이 초안을 작성하고 있습니다…</p>
+          ) : (
+            <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-ink-50 p-4 text-sm leading-relaxed text-ink-800">
+              {result}
+            </pre>
+          )}
+        </div>
+      )}
     </div>
   )
 }
