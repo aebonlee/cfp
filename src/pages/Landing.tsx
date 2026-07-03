@@ -222,21 +222,21 @@ function HeroArt() {
           </g>
         </g>
 
-        {/* 만년필 */}
-        <g transform="translate(300 150) rotate(52)">
-          <g className="cfp-float-c">
-            {/* 몸통 */}
-            <rect x="-24" y="-15" width="150" height="30" rx="15" fill="url(#pen)" />
-            {/* 클립 링 */}
-            <rect x="60" y="-15" width="8" height="30" fill="#0b1220" opacity="0.5" />
+        {/* 만년필 — 닙(펜촉)이 왼쪽 종이를 향함 */}
+        <g transform="translate(295 205) rotate(-35)">
+          <g className="cfp-bob">
+            {/* 닙(펜촉): 왼쪽 뾰족 */}
+            <path d="M-30 0 L14 -12 L14 12 Z" fill="#f59e0b" />
+            <path d="M-30 0 L2 0" stroke="#b45309" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="4" cy="0" r="3.5" fill="#b45309" />
             {/* 그립 */}
-            <rect x="120" y="-12" width="34" height="24" rx="8" fill="#475569" />
-            {/* 닙(펜촉) */}
-            <path d="M154 -12 L200 0 L154 12 Z" fill="#f59e0b" />
-            <path d="M170 0 L200 0" stroke="#b45309" strokeWidth="2" strokeLinecap="round" />
-            <circle cx="168" cy="0" r="3.5" fill="#b45309" />
+            <rect x="14" y="-12" width="34" height="24" rx="8" fill="#475569" />
+            {/* 몸통 */}
+            <rect x="48" y="-15" width="127" height="30" rx="15" fill="url(#pen)" />
+            {/* 클립 링 */}
+            <rect x="120" y="-15" width="8" height="30" fill="#0b1220" opacity="0.5" />
             {/* 끝 장식 */}
-            <circle cx="-24" cy="0" r="6" fill="#f59e0b" />
+            <circle cx="175" cy="0" r="6" fill="#f59e0b" />
           </g>
         </g>
 

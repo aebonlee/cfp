@@ -50,11 +50,16 @@ body {
   0%, 100% { transform: translateY(0); opacity: .5; }
   50%      { transform: translateY(-10px); opacity: 1; }
 }
+@keyframes cfp-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-20px); }
+}
+.cfp-bob     { animation: cfp-bob 5s ease-in-out infinite; transform-origin: center; }
 .cfp-float-a { animation: cfp-float-a 6.5s ease-in-out infinite; transform-origin: center; }
 .cfp-float-b { animation: cfp-float-b 5.5s ease-in-out infinite; transform-origin: center; }
 .cfp-float-c { animation: cfp-float-c 4.5s ease-in-out infinite; transform-origin: center; }
 .cfp-drift   { animation: cfp-drift 3.5s ease-in-out infinite; transform-origin: center; }
 
 @media (prefers-reduced-motion: reduce) {
-  .cfp-float-a, .cfp-float-b, .cfp-float-c, .cfp-drift { animation: none; }
+  .cfp-float-a, .cfp-float-b, .cfp-float-c, .cfp-drift, .cfp-bob { animation: none; }
 }
