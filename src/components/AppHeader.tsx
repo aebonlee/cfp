@@ -30,6 +30,10 @@ export default function AppHeader() {
             <span className="font-serif text-lg font-bold tracking-tight sm:text-xl">Call for Papers</span>
           </Link>
           <nav className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-600">
+            <a href="/#how" className="hidden hover:text-ink-900 lg:inline">작동 방식</a>
+            <a href="/#team" className="hidden hover:text-ink-900 lg:inline">팀 구성</a>
+            <a href="/#format" className="hidden hover:text-ink-900 lg:inline">논문 형식</a>
+            <span className="hidden text-ink-200 lg:inline">|</span>
             <Link to="/dashboard" className="hover:text-ink-900">
               내 논문
             </Link>
