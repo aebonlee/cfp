@@ -249,7 +249,7 @@ ${secs}${refsHtml}
             {sectionDefs.map((s) => (
               <section key={s.kind}>
                 <h2 className="border-b border-ink-100 pb-1 font-serif text-lg font-bold">{s.title}</h2>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-ink-700">
+                <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-700">
                   {(content[s.kind] ?? '').trim() || <span className="text-ink-300">(작성 예정)</span>}
                 </p>
               </section>

@@ -78,7 +78,7 @@ export default function IntegrityPanel({
                   <span className="rounded-full bg-amber-500 px-2 py-0.5 font-semibold text-white">{d.count}회 반복</span>
                   <span className="text-ink-500">{d.sections.join(' · ')}</span>
                 </div>
-                <p className="text-sm leading-relaxed text-ink-700">"{d.text}"</p>
+                <p className="break-words text-sm leading-relaxed text-ink-700">"{d.text}"</p>
               </div>
             ))
           )}
@@ -105,7 +105,7 @@ export default function IntegrityPanel({
           {aiLoading ? (
             <p className="py-10 text-center text-sm text-ink-400">AI가 원고를 점검하고 있습니다…</p>
           ) : aiText ? (
-            <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap text-sm leading-relaxed text-ink-800">
+            <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-800">
               {aiText}
             </pre>
           ) : (

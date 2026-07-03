@@ -130,7 +130,7 @@ export default function ReferencesPanel({ paper, userId }: { paper: Paper; userI
           {aiLoading ? (
             <p className="py-8 text-center text-sm text-ink-400">AI 에디터가 참고문헌을 정리하고 있습니다…</p>
           ) : (
-            <pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-ink-50 p-4 text-sm leading-relaxed text-ink-800">
+            <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-ink-50 p-4 text-sm leading-relaxed text-ink-800">
               {aiText}
             </pre>
           )}

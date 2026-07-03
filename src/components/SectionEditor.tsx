@@ -352,7 +352,7 @@ export default function SectionEditor({
               <p className="py-8 text-center text-sm text-ink-400">AI 팀원이 작업하고 있습니다…</p>
             ) : (
               <>
-                <pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-ink-50 p-4 text-sm leading-relaxed text-ink-800">
+                <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-ink-50 p-4 text-sm leading-relaxed text-ink-800">
                   {aiText}
                 </pre>
                 <div className="mt-3 flex gap-2">
@@ -417,7 +417,7 @@ function ReviewView({
           <div key={anchor} className="group rounded-xl border border-ink-200 bg-white p-4">
             <div className="flex items-start gap-3">
               <span className="mt-1 shrink-0 text-xs text-ink-300">¶{i + 1}</span>
-              <p className="flex-1 whitespace-pre-wrap text-sm leading-relaxed text-ink-800">{p}</p>
+              <p className="flex-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-800">{p}</p>
             </div>
             <div className="mt-2 pl-7">
               <CommentThread
