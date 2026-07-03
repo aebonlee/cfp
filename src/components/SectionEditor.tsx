@@ -40,14 +40,46 @@ export default function SectionEditor({
   const [history, setHistory] = useState<Snapshot[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  // 제공 주제(seed)의 원본 초안 번호 (sourceFile "NN. ..." → NN)
+  const draftNum = paper.seed && paper.sourceFile ? paper.sourceFile.match(/^(\d+)\./)?.[1] : undefined
+
   useEffect(() => {
     let alive = true
-    loadSections(paper.id, userId).then((c) => alive && setContent(c))
     loadComments(paper.id, userId).then((c) => alive && setComments(c))
     loadReferences(paper.id, userId).then((r) => alive && setRefs(r))
+
+    ;(async () => {
+      const loaded = await loadSections(paper.id, userId)
+      if (!alive) return
+      const firstKind = sections[0].kind
+      const cur = loaded[firstKind] ?? ''
+      // 시드 논문: 빈 섹션이거나 옛 이미지 경로가 남아있으면 최신 원고 자동 로드
+      const stale = /!\[image\.png\]\((?!\/topics)/.test(cur)
+      if (draftNum && (!cur.trim() || stale)) {
+        try {
+          const res = await fetch(`${import.meta.env.BASE_URL}topics/${draftNum}.md`)
+          if (res.ok) {
+            const text = (await res.text()).trim()
+            if (alive && text) {
+              loaded[firstKind] = text
+              await saveSection(paper.id, firstKind, sections[0].title, text, userId)
+              if (alive) {
+                setCurrent(firstKind)
+                setMode('review')
+              }
+            }
+          }
+        } catch {
+          /* 네트워크 실패 시 무시 */
+        }
+      }
+      if (alive) setContent(loaded)
+    })()
+
     return () => {
       alive = false
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paper.id, userId])
 
   // 프리셋 변경으로 현재 섹션이 사라지면 첫 섹션으로
@@ -124,10 +156,9 @@ export default function SectionEditor({
     setCiteOpen(false)
   }
 
-  // 제공 주제(seed)의 원본 초안 번호 (sourceFile "NN. ..." → NN)
-  const draftNum = paper.seed && paper.sourceFile ? paper.sourceFile.match(/^(\d+)\./)?.[1] : undefined
   const [loadingDraft, setLoadingDraft] = useState(false)
 
+  // 원본 초안 다시 불러오기(현재 섹션을 최신 원고로 교체)
   async function loadOriginalDraft() {
     if (!draftNum) return
     setLoadingDraft(true)
@@ -135,9 +166,8 @@ export default function SectionEditor({
       const res = await fetch(`${import.meta.env.BASE_URL}topics/${draftNum}.md`)
       if (res.ok) {
         const text = (await res.text()).trim()
-        const merged = value.trim() ? `${value}\n\n${text}` : text
-        update(merged)
-        await saveSection(paper.id, current, def.title, merged, userId)
+        update(text)
+        await saveSection(paper.id, current, def.title, text, userId)
         setSavedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
         setMode('review')
       }
@@ -222,7 +252,7 @@ export default function SectionEditor({
                 disabled={loadingDraft}
                 className="rounded-full border border-gold-400 bg-gold-500/10 px-4 py-1.5 text-xs font-medium text-gold-600 transition hover:bg-gold-500/20 disabled:opacity-40"
               >
-                {loadingDraft ? '불러오는 중…' : '📄 원본 초안 불러오기'}
+                {loadingDraft ? '불러오는 중…' : '📄 원본 초안 다시 불러오기'}
               </button>
             )}
             {mode === 'edit' && (
