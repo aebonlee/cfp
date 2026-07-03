@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../lib/auth'
+import LoginModal from '../components/LoginModal'
 
 const STEPS = [
   {
@@ -44,25 +47,48 @@ const FORMATS = [
 ]
 
 export default function Landing() {
+  const { user, signOut } = useAuth()
+  const [loginOpen, setLoginOpen] = useState(false)
+  const name = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0]
+
   return (
     <div className="min-h-screen bg-ink-50 text-ink-900">
       {/* Nav */}
       <header className="sticky top-0 z-20 border-b border-ink-200/70 bg-ink-50/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-6 py-4">
           <div className="flex items-center gap-2">
             <Logo />
             <span className="font-serif text-xl font-bold tracking-tight">Call for Papers</span>
           </div>
-          <nav className="hidden items-center gap-8 text-sm text-ink-600 md:flex">
-            <a href="#how" className="hover:text-ink-900">작동 방식</a>
-            <a href="#team" className="hover:text-ink-900">팀 구성</a>
-            <a href="#format" className="hover:text-ink-900">논문 형식</a>
+          <nav className="flex flex-wrap items-center gap-4 text-sm text-ink-600 sm:gap-6">
+            <a href="#how" className="hidden hover:text-ink-900 lg:inline">작동 방식</a>
+            <a href="#team" className="hidden hover:text-ink-900 lg:inline">팀 구성</a>
+            <a href="#format" className="hidden hover:text-ink-900 lg:inline">논문 형식</a>
+            <span className="hidden text-ink-200 lg:inline">|</span>
+            <Link to="/dashboard" className="font-medium hover:text-ink-900">내 논문</Link>
+            <Link to="/new" className="font-medium hover:text-ink-900">새 논문</Link>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <span className="hidden text-ink-700 sm:inline">{name}님</span>
+                <button
+                  onClick={signOut}
+                  className="rounded-full border border-ink-300 px-4 py-2 font-medium text-ink-700 transition hover:border-ink-900"
+                >
+                  로그아웃
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setLoginOpen(true)}
+                className="rounded-full bg-ink-900 px-5 py-2 font-medium text-white transition hover:bg-ink-700"
+              >
+                로그인 / 가입
+              </button>
+            )}
           </nav>
-          <Link to="/dashboard" className="rounded-full bg-ink-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-ink-700">
-            시작하기
-          </Link>
         </div>
       </header>
+      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
 
       {/* Hero */}
       <section className="relative overflow-hidden">

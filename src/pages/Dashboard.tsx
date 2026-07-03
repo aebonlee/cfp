@@ -117,7 +117,20 @@ function PaperCard({ paper }: { paper: Paper }) {
           </span>
         ))}
       </div>
-      <div className="mt-4 flex items-center justify-between border-t border-ink-100 pt-3 text-xs text-ink-500">
+      {/* 진행률 */}
+      <div className="mt-4">
+        <div className="mb-1 flex items-center justify-between text-xs text-ink-400">
+          <span>완성도</span>
+          <span className="font-semibold text-ink-600">{paper.progress ?? 0}%</span>
+        </div>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink-100">
+          <div
+            className="h-full rounded-full bg-gold-500 transition-all"
+            style={{ width: `${paper.progress ?? 0}%` }}
+          />
+        </div>
+      </div>
+      <div className="mt-3 flex items-center justify-between border-t border-ink-100 pt-3 text-xs text-ink-500">
         <span>
           팀 {paper.members.length === 0 ? '미구성' : `사람 ${humans} · AI ${ais}`}
         </span>

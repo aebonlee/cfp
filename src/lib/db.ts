@@ -190,6 +190,17 @@ export async function saveTeam(paperId: string, members: TeamMember[]): Promise<
   }
 }
 
+/** 여러 논문의 '내용이 있는 섹션' 개수를 한 번에 조회 */
+export async function sectionFilledCounts(paperIds: string[]): Promise<Record<string, number>> {
+  if (paperIds.length === 0) return {}
+  const { data } = await supabase.from(TABLES.sections).select('paper_id, content').in('paper_id', paperIds)
+  const m: Record<string, number> = {}
+  for (const r of (data ?? []) as { paper_id: string; content: string }[]) {
+    if ((r.content ?? '').trim()) m[r.paper_id] = (m[r.paper_id] ?? 0) + 1
+  }
+  return m
+}
+
 export async function getSections(paperId: string): Promise<Record<string, string>> {
   const { data } = await supabase.from(TABLES.sections).select('kind, content').eq('paper_id', paperId)
   const out: Record<string, string> = {}

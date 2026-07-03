@@ -11,6 +11,7 @@ import {
   loadReferences,
 } from '../lib/papers'
 import { requestAi, type AiRole } from '../lib/ai'
+import { getHistory, pushHistory, type Snapshot } from '../lib/store'
 import CommentThread from './CommentThread'
 
 export default function SectionEditor({
@@ -34,6 +35,8 @@ export default function SectionEditor({
   const [aiText, setAiText] = useState('')
   const [savedAt, setSavedAt] = useState<string | null>(null)
   const [citeOpen, setCiteOpen] = useState(false)
+  const [histOpen, setHistOpen] = useState(false)
+  const [history, setHistory] = useState<Snapshot[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -83,8 +86,21 @@ export default function SectionEditor({
   }
 
   async function save() {
-    await saveSection(paper.id, current, def.title, content[current] ?? '', userId)
+    const body = content[current] ?? ''
+    await saveSection(paper.id, current, def.title, body, userId)
+    pushHistory(paper.id, current, body, userName)
     setSavedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
+  }
+
+  function openHistory() {
+    setHistory(getHistory(paper.id, def.kind))
+    setHistOpen(true)
+  }
+  function restore(snap: Snapshot) {
+    update(snap.content)
+    saveSection(paper.id, def.kind, def.title, snap.content, userId)
+    setSavedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
+    setHistOpen(false)
   }
 
   // 커서 위치에 인용 [n] 삽입
@@ -209,6 +225,14 @@ export default function SectionEditor({
               </button>
             )}
             {mode === 'edit' && (
+              <button
+                onClick={openHistory}
+                className="rounded-full border border-ink-300 px-4 py-1.5 text-xs font-medium text-ink-700 transition hover:border-gold-500 hover:text-gold-600"
+              >
+                이력
+              </button>
+            )}
+            {mode === 'edit' && (
               <div className="relative">
                 <button
                   onClick={() => setCiteOpen((o) => !o)}
@@ -267,6 +291,45 @@ export default function SectionEditor({
                 </button>
               </span>
             </div>
+
+            {histOpen && (
+              <div className="mt-4 rounded-2xl border border-ink-200 bg-white p-5">
+                <div className="mb-3 flex items-center justify-between">
+                  <h4 className="font-bold">
+                    「{def.title}」 버전 이력 <span className="text-sm font-normal text-ink-400">· {history.length}개</span>
+                  </h4>
+                  <button onClick={() => setHistOpen(false)} className="text-sm text-ink-400 hover:text-ink-700">
+                    닫기
+                  </button>
+                </div>
+                {history.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-ink-400">저장된 버전이 없습니다. 저장하면 이력이 쌓입니다.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {history
+                      .slice()
+                      .reverse()
+                      .map((snap, i) => (
+                        <li key={snap.ts} className="rounded-xl border border-ink-200 p-3">
+                          <div className="flex items-center justify-between text-xs text-ink-500">
+                            <span>
+                              <b className="text-ink-700">{history.length - i}차</b> · {snap.author} ·{' '}
+                              {snap.ts.slice(5, 16).replace('T', ' ')} · {snap.content.length.toLocaleString()}자
+                            </span>
+                            <button
+                              onClick={() => restore(snap)}
+                              className="rounded-full bg-gold-500 px-3 py-1 font-semibold text-ink-900 hover:bg-gold-400"
+                            >
+                              이 버전으로 되돌리기
+                            </button>
+                          </div>
+                          <p className="mt-2 line-clamp-2 text-sm text-ink-600">{snap.content}</p>
+                        </li>
+                      ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </>
         ) : (
           <ReviewView

@@ -1,11 +1,29 @@
 // 논문 데이터 파사드: 로그인(userId 있음) → Supabase(wp_), 비로그인 → localStorage
 import type { Paper, TeamMember, Reference, Comment } from '../types'
+import { findPreset } from '../data/presets'
+import { resolveSections } from '../data/sections'
+import { getPresetId } from './store'
 import * as db from './db'
 import * as local from './store'
 
 export async function loadPapers(userId?: string): Promise<Paper[]> {
-  if (userId) return db.listPapers(userId)
-  return local.getPapers()
+  const papers = userId ? await db.listPapers(userId) : local.getPapers()
+
+  // 진행률 계산: 채워진 섹션 / 예상 섹션 수
+  let counts: Record<string, number> = {}
+  if (userId) {
+    counts = await db.sectionFilledCounts(papers.map((p) => p.id))
+  } else {
+    for (const p of papers) {
+      counts[p.id] = Object.values(local.getSectionContent(p.id)).filter((v) => v.trim()).length
+    }
+  }
+  for (const p of papers) {
+    const preset = findPreset(getPresetId(p.id))
+    const expected = resolveSections(preset?.format ?? p.format, preset?.sections).length || 8
+    p.progress = Math.min(100, Math.round(((counts[p.id] ?? 0) / expected) * 100))
+  }
+  return papers
 }
 
 export async function loadPaper(id: string, userId?: string): Promise<Paper | undefined> {

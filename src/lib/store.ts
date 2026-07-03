@@ -170,6 +170,43 @@ export function getComments(paperId: string): Comment[] {
   return loadComments()[paperId] ?? []
 }
 
+// ---- 섹션 버전 히스토리 (localStorage) ----
+const HISTORY_KEY = 'withpaper.history.v1'
+export interface Snapshot {
+  ts: string
+  content: string
+  author: string
+}
+type HistoryStore = Record<string, Record<string, Snapshot[]>> // paperId → kind → snapshots
+
+function loadHistory(): HistoryStore {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}') as HistoryStore
+  } catch {
+    return {}
+  }
+}
+function saveHistory(h: HistoryStore) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(h))
+  } catch {
+    /* 무시 */
+  }
+}
+export function getHistory(paperId: string, kind: string): Snapshot[] {
+  return loadHistory()[paperId]?.[kind] ?? []
+}
+/** 직전 스냅샷과 다르면 새 버전 기록(섹션당 최대 20개 유지) */
+export function pushHistory(paperId: string, kind: string, content: string, author: string) {
+  if (!content.trim()) return
+  const all = loadHistory()
+  const list = all[paperId]?.[kind] ?? []
+  if (list.length && list[list.length - 1].content === content) return
+  const next = [...list, { ts: new Date().toISOString(), content, author }].slice(-20)
+  all[paperId] = { ...(all[paperId] ?? {}), [kind]: next }
+  saveHistory(all)
+}
+
 // ---- 투고 양식 프리셋 (localStorage, 논문별) ----
 const PRESET_KEY = 'withpaper.presets.v1'
 export function getPresetId(paperId: string): string | undefined {
