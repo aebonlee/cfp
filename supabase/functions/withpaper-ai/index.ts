@@ -13,7 +13,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-type Role = 'ai_writer' | 'ai_reviewer' | 'ai_editor'
+type Role = 'ai_writer' | 'ai_reviewer' | 'ai_editor' | 'ai_integrity'
 
 interface Body {
   role: Role
@@ -52,6 +52,9 @@ function userPrompt(b: Body) {
   }
   if (b.role === 'ai_reviewer') {
     return `${meta}\n\n아래는 「${b.section}」 섹션의 현재 초안입니다. 학술지 심사 기준으로 (1) 논리·근거, (2) 형식·인용, (3) 문장·표현 관점에서 구체적인 개선점을 항목별로 제시하고, 우선순위를 매겨 주세요.\n\n[초안]\n${b.draft ?? '(초안 없음)'}`
+  }
+  if (b.role === 'ai_integrity') {
+    return `${meta}\n\n아래 원고를 연구윤리·유사도 관점에서 사전 점검해 주세요. 실제 표절 검사기가 아니라 투고 전 자가 점검입니다. 다음을 각각 항목·인용문과 함께 지적하세요:\n1) 출처·인용이 필요한데 누락된 주장(문장을 인용하고 어떤 근거가 필요한지)\n2) 표절 위험이 높은 상투적·일반론 문장(패러프레이즈 제안 포함)\n3) 과도한 직접 인용 또는 원문 의존\n4) 섹션 간 중복·자기표절 소지\n마지막에 '유사도 위험: 낮음/보통/높음'으로 종합 판정하세요.\n\n[원고]\n${b.draft ?? '(원고 없음)'}`
   }
   // ai_editor
   return `${meta}\n\n아래 「${b.section}」 섹션 초안을 학술지 형식에 맞게 교정(문장 다듬기, 용어 일관성, 인용 표기 정리)해 주세요. 교정본 전문을 제시하고, 끝에 주요 변경사항을 3~5개로 요약하세요.\n\n[초안]\n${b.draft ?? '(초안 없음)'}`
