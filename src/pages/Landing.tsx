@@ -4,8 +4,8 @@ import AppHeader from '../components/AppHeader'
 const STEPS = [
   {
     n: '01',
-    title: '주제를 던진다',
-    body: '연구 주제와 가진 자료를 넣으면 논문 프로젝트가 열립니다. KCI 한글 논문과 국제 저널 IMRaD 영문, 두 형식을 지원합니다.',
+    title: '주제를 정한다',
+    body: '논문 아이디어나 주제, 가진 자료만 넣으면 논문 프로젝트가 열립니다. KCI 한글 논문과 국제 저널 IMRaD 영문, 두 형식을 지원합니다.',
   },
   {
     n: '02',
