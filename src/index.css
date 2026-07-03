@@ -32,3 +32,29 @@ body {
   color: var(--color-ink-900);
   -webkit-font-smoothing: antialiased;
 }
+
+/* 히어로 아트: 둥둥 떠다니는 효과 */
+@keyframes cfp-float-a {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50%      { transform: translateY(-18px) rotate(-4deg); }
+}
+@keyframes cfp-float-b {
+  0%, 100% { transform: translateY(0) rotate(3deg); }
+  50%      { transform: translateY(-26px) rotate(3deg); }
+}
+@keyframes cfp-float-c {
+  0%, 100% { transform: translateY(0) rotate(18deg); }
+  50%      { transform: translateY(-14px) rotate(18deg); }
+}
+@keyframes cfp-drift {
+  0%, 100% { transform: translateY(0); opacity: .5; }
+  50%      { transform: translateY(-10px); opacity: 1; }
+}
+.cfp-float-a { animation: cfp-float-a 6.5s ease-in-out infinite; transform-origin: center; }
+.cfp-float-b { animation: cfp-float-b 5.5s ease-in-out infinite; transform-origin: center; }
+.cfp-float-c { animation: cfp-float-c 4.5s ease-in-out infinite; transform-origin: center; }
+.cfp-drift   { animation: cfp-drift 3.5s ease-in-out infinite; transform-origin: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cfp-float-a, .cfp-float-b, .cfp-float-c, .cfp-drift { animation: none; }
+}

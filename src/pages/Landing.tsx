@@ -53,8 +53,8 @@ export default function Landing() {
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute -right-40 -top-40 h-96 w-96 rounded-full bg-gold-500/10 blur-3xl" />
         <div className="pointer-events-none absolute -left-40 top-40 h-96 w-96 rounded-full bg-ink-300/30 blur-3xl" />
-        <div className="mx-auto max-w-6xl px-6 py-24 md:py-32">
-          <div className="max-w-3xl">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-20 md:py-28 lg:grid-cols-[1fr_440px]">
+          <div className="max-w-2xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-ink-200 bg-white px-4 py-1.5 text-xs font-medium text-ink-600">
               <span className="h-1.5 w-1.5 rounded-full bg-gold-500" />
               사람 + AI 하이브리드 팀 · 학술지 게재까지
@@ -76,6 +76,7 @@ export default function Landing() {
               </a>
             </div>
           </div>
+          <HeroArt />
         </div>
       </section>
 
@@ -169,6 +170,88 @@ export default function Landing() {
           <p>© 2026 DreamIT Biz · 함께 쓰는 논문</p>
         </div>
       </footer>
+    </div>
+  )
+}
+
+function HeroArt() {
+  return (
+    <div className="relative mx-auto w-full max-w-[420px]">
+      <svg viewBox="0 0 460 460" className="h-auto w-full" role="img" aria-label="종이와 만년필">
+        <defs>
+          <linearGradient id="sheet" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#ffffff" />
+            <stop offset="1" stopColor="#f8fafc" />
+          </linearGradient>
+          <linearGradient id="pen" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="#0f172a" />
+            <stop offset="1" stopColor="#334155" />
+          </linearGradient>
+          <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="10" stdDeviation="14" floodColor="#1e293b" floodOpacity="0.14" />
+          </filter>
+        </defs>
+
+        {/* 뒤 종이 */}
+        <g transform="translate(70 110)">
+          <g className="cfp-float-a">
+            <rect x="0" y="0" width="190" height="250" rx="14" fill="#eef2f7" stroke="#e2e8f0" filter="url(#soft)" />
+          </g>
+        </g>
+
+        {/* 앞 종이 (본문) */}
+        <g transform="translate(120 70)">
+          <g className="cfp-float-b">
+            <rect x="0" y="0" width="210" height="270" rx="16" fill="url(#sheet)" stroke="#e2e8f0" filter="url(#soft)" />
+            {/* 제목 바 (앰버) */}
+            <rect x="26" y="30" width="120" height="14" rx="7" fill="#f59e0b" />
+            {/* 본문 라인 */}
+            <rect x="26" y="66" width="158" height="7" rx="3.5" fill="#cbd5e1" />
+            <rect x="26" y="84" width="158" height="7" rx="3.5" fill="#cbd5e1" />
+            <rect x="26" y="102" width="120" height="7" rx="3.5" fill="#e2e8f0" />
+            <rect x="26" y="132" width="158" height="7" rx="3.5" fill="#cbd5e1" />
+            <rect x="26" y="150" width="158" height="7" rx="3.5" fill="#cbd5e1" />
+            <rect x="26" y="168" width="96" height="7" rx="3.5" fill="#e2e8f0" />
+            {/* 완료 체크 */}
+            <circle cx="40" cy="220" r="15" fill="#dcfce7" />
+            <path d="M33 220l5 5 9-10" fill="none" stroke="#16a34a" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+            <rect x="64" y="214" width="110" height="7" rx="3.5" fill="#cbd5e1" />
+            <rect x="64" y="228" width="70" height="7" rx="3.5" fill="#e2e8f0" />
+          </g>
+        </g>
+
+        {/* 만년필 */}
+        <g transform="translate(300 150) rotate(52)">
+          <g className="cfp-float-c">
+            {/* 몸통 */}
+            <rect x="-24" y="-15" width="150" height="30" rx="15" fill="url(#pen)" />
+            {/* 클립 링 */}
+            <rect x="60" y="-15" width="8" height="30" fill="#0b1220" opacity="0.5" />
+            {/* 그립 */}
+            <rect x="120" y="-12" width="34" height="24" rx="8" fill="#475569" />
+            {/* 닙(펜촉) */}
+            <path d="M154 -12 L200 0 L154 12 Z" fill="#f59e0b" />
+            <path d="M170 0 L200 0" stroke="#b45309" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="168" cy="0" r="3.5" fill="#b45309" />
+            {/* 끝 장식 */}
+            <circle cx="-24" cy="0" r="6" fill="#f59e0b" />
+          </g>
+        </g>
+
+        {/* 떠다니는 잉크 방울 */}
+        <g className="cfp-drift" style={{ animationDelay: '0s' }}>
+          <circle cx="360" cy="120" r="7" fill="#f59e0b" opacity="0.8" />
+        </g>
+        <g className="cfp-drift" style={{ animationDelay: '1.2s' }}>
+          <circle cx="392" cy="260" r="5" fill="#fbbf24" />
+        </g>
+        <g className="cfp-drift" style={{ animationDelay: '0.6s' }}>
+          <circle cx="90" cy="80" r="5" fill="#cbd5e1" />
+        </g>
+        <g className="cfp-drift" style={{ animationDelay: '1.8s' }}>
+          <path d="M340 350l3 3 3-3-3-3z" fill="#f59e0b" />
+        </g>
+      </svg>
     </div>
   )
 }
