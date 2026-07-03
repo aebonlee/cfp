@@ -64,8 +64,10 @@ export default function Landing() {
               <span className="text-gold-600">게재</span>까지 함께.
             </h1>
             <p className="mt-6 text-lg leading-relaxed text-ink-600">
-              주제만 던지면 됩니다. 사람 1~3인과 AI 팀원이 한 팀이 되어
-              초록부터 참고문헌까지, 투고 가능한 상태로 논문을 완성합니다.
+              논문 아이디어 또는 주제만 정하면 바로 논문 작성이 시작됩니다.
+              <br />
+              사람 1~3인과 AI 팀원이 한 팀이 되어 초록부터 참고문헌까지,
+              투고 가능한 상태로 논문을 완성합니다.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-4">
               <Link to="/dashboard" className="rounded-full bg-gold-500 px-7 py-3 font-medium text-ink-900 shadow-sm transition hover:bg-gold-400">
