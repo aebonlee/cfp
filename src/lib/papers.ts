@@ -9,7 +9,7 @@ export async function loadPapers(userId?: string): Promise<Paper[]> {
 }
 
 export async function loadPaper(id: string, userId?: string): Promise<Paper | undefined> {
-  if (userId) return db.getPaper(id)
+  if (userId) return db.getPaper(id, userId)
   return local.getPaper(id)
 }
 

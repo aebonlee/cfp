@@ -76,6 +76,9 @@ export default function PaperWorkspace() {
             {paper.seed && (
               <span className="rounded-full bg-ink-900/5 px-3 py-1 text-xs text-ink-500">제공 주제</span>
             )}
+            {paper.shared && (
+              <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">공유받음</span>
+            )}
           </div>
           <h1 className="mt-3 font-serif text-2xl font-bold leading-snug">{paper.title}</h1>
           {paper.titleEn && <p className="mt-1 text-sm italic text-ink-400">{paper.titleEn}</p>}
@@ -102,6 +105,7 @@ export default function PaperWorkspace() {
               {humans.map((m) => (
                 <span key={m.id} className="rounded-full bg-ink-900 px-3 py-1 text-xs text-white">
                   {m.name || '이름 미정'} · {ROLE_LABEL[m.role]}
+                  {m.email && <span className="ml-1 text-white/60">· {m.email}</span>}
                 </span>
               ))}
               {ais.map((m) => (

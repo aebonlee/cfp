@@ -96,9 +96,14 @@ function PaperCard({ paper }: { paper: Paper }) {
     >
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs font-medium text-ink-400">{paper.cluster}</span>
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLE[paper.status]}`}>
-          {STATUS_LABEL[paper.status]}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {paper.shared && (
+            <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-semibold text-indigo-700">공유받음</span>
+          )}
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLE[paper.status]}`}>
+            {STATUS_LABEL[paper.status]}
+          </span>
+        </div>
       </div>
       <h3 className="mt-3 font-serif text-lg font-bold leading-snug group-hover:text-gold-600">{paper.title}</h3>
       <p className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-ink-500">{paper.summary}</p>

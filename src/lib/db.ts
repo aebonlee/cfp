@@ -6,6 +6,7 @@ import { SEED_TOPICS } from '../data/topics'
 
 interface PaperRow {
   id: string
+  owner_id: string
   title: string
   title_en: string | null
   cluster: string
@@ -28,9 +29,21 @@ interface MemberRow {
   role: MemberRole
   name: string
   note: string | null
+  invite_email: string | null
 }
 
-function toPaper(row: PaperRow, members: TeamMember[]): Paper {
+function toMember(m: MemberRow): TeamMember {
+  return {
+    id: m.id,
+    type: m.type,
+    role: m.role,
+    name: m.name,
+    note: m.note ?? undefined,
+    email: m.invite_email ?? undefined,
+  }
+}
+
+function toPaper(row: PaperRow, members: TeamMember[], viewerId?: string): Paper {
   return {
     id: row.id,
     title: row.title,
@@ -46,6 +59,7 @@ function toPaper(row: PaperRow, members: TeamMember[]): Paper {
     seed: row.seed,
     sourceFile: row.source_file ?? undefined,
     createdAt: (row.created_at ?? '').slice(0, 10),
+    shared: viewerId ? row.owner_id !== viewerId : false,
   }
 }
 
@@ -73,8 +87,9 @@ export async function syncSeeds(ownerId: string): Promise<void> {
   )
 }
 
-/** 사용자의 논문 목록(+팀원) 로드 */
+/** 사용자의 논문 목록(+팀원) 로드 — 소유 + 이메일로 초대받은 공유 논문 포함 */
 export async function listPapers(ownerId: string): Promise<Paper[]> {
+  await supabase.rpc('wp_claim_invites') // 내 이메일로 온 초대 연결(있으면)
   await syncSeeds(ownerId)
   const { data: papers } = await supabase
     .from(TABLES.papers)
@@ -88,24 +103,18 @@ export async function listPapers(ownerId: string): Promise<Paper[]> {
   const byPaper = new Map<string, TeamMember[]>()
   for (const m of (members ?? []) as MemberRow[]) {
     const list = byPaper.get(m.paper_id) ?? []
-    list.push({ id: m.id, type: m.type, role: m.role, name: m.name, note: m.note ?? undefined })
+    list.push(toMember(m))
     byPaper.set(m.paper_id, list)
   }
-  return rows.map((r) => toPaper(r, byPaper.get(r.id) ?? []))
+  return rows.map((r) => toPaper(r, byPaper.get(r.id) ?? [], ownerId))
 }
 
-export async function getPaper(id: string): Promise<Paper | undefined> {
+export async function getPaper(id: string, viewerId?: string): Promise<Paper | undefined> {
   const { data: row } = await supabase.from(TABLES.papers).select('*').eq('id', id).maybeSingle()
   if (!row) return undefined
   const { data: members } = await supabase.from(TABLES.members).select('*').eq('paper_id', id)
-  const team = ((members ?? []) as MemberRow[]).map((m) => ({
-    id: m.id,
-    type: m.type,
-    role: m.role,
-    name: m.name,
-    note: m.note ?? undefined,
-  }))
-  return toPaper(row as PaperRow, team)
+  const team = ((members ?? []) as MemberRow[]).map(toMember)
+  return toPaper(row as PaperRow, team, viewerId)
 }
 
 export async function createPaper(
@@ -143,6 +152,7 @@ export async function saveTeam(paperId: string, members: TeamMember[]): Promise<
         role: m.role,
         name: m.name,
         note: m.note ?? null,
+        invite_email: m.type === 'human' ? (m.email ?? null) : null,
       })),
     )
     await supabase.from(TABLES.papers).update({ status: 'team' }).eq('id', paperId).eq('status', 'topic')

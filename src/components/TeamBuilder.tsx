@@ -75,29 +75,43 @@ export default function TeamBuilder({
               아직 사람 팀원이 없습니다. 최소 1인(제1저자)을 추가하세요.
             </p>
           )}
-          {humans.map((m) => (
-            <div key={m.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-ink-200 bg-white p-4">
-              <span className="rounded-full bg-ink-900/5 px-3 py-1 text-xs font-semibold text-ink-700">사람</span>
-              <input
-                value={m.name}
-                onChange={(e) => update(m.id, { name: e.target.value })}
-                placeholder="이름 (예: 이애본)"
-                className="min-w-40 flex-1 rounded-lg border border-ink-200 px-3 py-2 text-sm outline-none focus:border-gold-500"
-              />
-              <select
-                value={m.role}
-                onChange={(e) => update(m.id, { role: e.target.value as MemberRole })}
-                className="rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm outline-none focus:border-gold-500"
-              >
-                {HUMAN_ROLES.map((r) => (
-                  <option key={r} value={r}>
-                    {ROLE_LABEL[r]}
-                  </option>
-                ))}
-              </select>
-              <button onClick={() => remove(m.id)} className="text-sm text-ink-400 hover:text-red-500">
-                삭제
-              </button>
+          {humans.map((m, i) => (
+            <div key={m.id} className="rounded-xl border border-ink-200 bg-white p-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="rounded-full bg-ink-900/5 px-3 py-1 text-xs font-semibold text-ink-700">사람</span>
+                <input
+                  value={m.name}
+                  onChange={(e) => update(m.id, { name: e.target.value })}
+                  placeholder="이름 (예: 이애본)"
+                  className="min-w-40 flex-1 rounded-lg border border-ink-200 px-3 py-2 text-sm outline-none focus:border-gold-500"
+                />
+                <select
+                  value={m.role}
+                  onChange={(e) => update(m.id, { role: e.target.value as MemberRole })}
+                  className="rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm outline-none focus:border-gold-500"
+                >
+                  {HUMAN_ROLES.map((r) => (
+                    <option key={r} value={r}>
+                      {ROLE_LABEL[r]}
+                    </option>
+                  ))}
+                </select>
+                <button onClick={() => remove(m.id)} className="text-sm text-ink-400 hover:text-red-500">
+                  삭제
+                </button>
+              </div>
+              {i > 0 && (
+                <div className="mt-3 flex items-center gap-2 pl-1">
+                  <span className="text-xs text-ink-400">초대 이메일</span>
+                  <input
+                    type="email"
+                    value={m.email ?? ''}
+                    onChange={(e) => update(m.id, { email: e.target.value })}
+                    placeholder="coauthor@example.com — 이 이메일로 로그인하면 공동저자 참여"
+                    className="flex-1 rounded-lg border border-ink-200 px-3 py-1.5 text-sm outline-none focus:border-gold-500"
+                  />
+                </div>
+              )}
             </div>
           ))}
         </div>

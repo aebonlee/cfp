@@ -19,6 +19,7 @@ export interface TeamMember {
   role: MemberRole
   name: string
   note?: string
+  email?: string // 사람 팀원 초대 이메일 (이 이메일로 로그인하면 공동저자 접근)
 }
 
 /** 논문 프로젝트 (주제 등록 단위) */
@@ -37,6 +38,7 @@ export interface Paper {
   seed?: boolean // 시드(제공 주제) 여부
   sourceFile?: string // reference/topics 원본
   createdAt: string
+  shared?: boolean // 다른 사람이 나를 공동저자로 초대한 논문
 }
 
 export const ROLE_LABEL: Record<MemberRole, string> = {
