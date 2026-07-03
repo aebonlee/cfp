@@ -1,7 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
-import type { Comment, Paper } from '../types'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { Comment, Paper, Reference } from '../types'
 import { sectionsFor } from '../data/sections'
-import { loadSections, saveSection, loadComments, addComment, resolveComment, removeComment } from '../lib/papers'
+import {
+  loadSections,
+  saveSection,
+  loadComments,
+  addComment,
+  resolveComment,
+  removeComment,
+  loadReferences,
+} from '../lib/papers'
 import { requestAi, type AiRole } from '../lib/ai'
 import CommentThread from './CommentThread'
 
@@ -19,15 +27,19 @@ export default function SectionEditor({
   const [current, setCurrent] = useState(sections[0].kind)
   const [mode, setMode] = useState<'edit' | 'review'>('edit')
   const [comments, setComments] = useState<Comment[]>([])
+  const [refs, setRefs] = useState<Reference[]>([])
   const [aiOpen, setAiOpen] = useState(false)
   const [aiLoading, setAiLoading] = useState<AiRole | null>(null)
   const [aiText, setAiText] = useState('')
   const [savedAt, setSavedAt] = useState<string | null>(null)
+  const [citeOpen, setCiteOpen] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     let alive = true
     loadSections(paper.id, userId).then((c) => alive && setContent(c))
     loadComments(paper.id, userId).then((c) => alive && setComments(c))
+    loadReferences(paper.id, userId).then((r) => alive && setRefs(r))
     return () => {
       alive = false
     }
@@ -67,6 +79,26 @@ export default function SectionEditor({
   async function save() {
     await saveSection(paper.id, current, def.title, content[current] ?? '', userId)
     setSavedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }))
+  }
+
+  // 커서 위치에 인용 [n] 삽입
+  function insertCitation(n: number) {
+    const ta = textareaRef.current
+    const marker = `[${n}]`
+    if (!ta) {
+      update(value + marker)
+    } else {
+      const start = ta.selectionStart ?? value.length
+      const end = ta.selectionEnd ?? value.length
+      const next = value.slice(0, start) + marker + value.slice(end)
+      update(next)
+      requestAnimationFrame(() => {
+        ta.focus()
+        const pos = start + marker.length
+        ta.setSelectionRange(pos, pos)
+      })
+    }
+    setCiteOpen(false)
   }
 
   // 제공 주제(seed)의 원본 초안 번호 (sourceFile "NN. ..." → NN)
@@ -170,6 +202,34 @@ export default function SectionEditor({
                 {loadingDraft ? '불러오는 중…' : '📄 원본 초안 불러오기'}
               </button>
             )}
+            {mode === 'edit' && (
+              <div className="relative">
+                <button
+                  onClick={() => setCiteOpen((o) => !o)}
+                  className="rounded-full border border-ink-300 px-4 py-1.5 text-xs font-medium text-ink-700 transition hover:border-gold-500 hover:text-gold-600"
+                >
+                  인용 삽입 [n]
+                </button>
+                {citeOpen && (
+                  <div className="absolute right-0 z-30 mt-1 max-h-72 w-80 overflow-auto rounded-xl border border-ink-200 bg-white p-2 shadow-lg">
+                    {refs.length === 0 ? (
+                      <p className="p-3 text-xs text-ink-400">참고문헌 탭에서 먼저 등록하세요.</p>
+                    ) : (
+                      refs.map((r, i) => (
+                        <button
+                          key={r.id}
+                          onClick={() => insertCitation(i + 1)}
+                          className="flex w-full gap-2 rounded-lg p-2 text-left text-xs hover:bg-ink-50"
+                        >
+                          <span className="shrink-0 font-semibold text-gold-600">[{i + 1}]</span>
+                          <span className="line-clamp-2 text-ink-600">{r.apa}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             <AiBtn onClick={() => runAi('ai_writer')} loading={aiLoading === 'ai_writer'}>
               AI 집필
             </AiBtn>
@@ -185,10 +245,11 @@ export default function SectionEditor({
         {mode === 'edit' ? (
           <>
             <textarea
+              ref={textareaRef}
               value={value}
               onChange={(e) => update(e.target.value)}
               onBlur={save}
-              placeholder={`「${def.title}」 내용을 작성하거나, AI 집필로 초안을 받아보세요.`}
+              placeholder={`「${def.title}」 내용을 작성하거나, AI 집필로 초안을 받아보세요. 인용은 [1] 처럼 번호로 넣으면 참고문헌과 자동 연결됩니다.`}
               className="h-[420px] w-full resize-none rounded-xl border border-ink-200 bg-white p-5 text-sm leading-relaxed outline-none focus:border-gold-500"
             />
             <div className="mt-2 flex items-center justify-between text-xs text-ink-400">

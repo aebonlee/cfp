@@ -3,6 +3,7 @@ import type { Comment, Paper, Reference } from '../types'
 import { ROLE_LABEL } from '../types'
 import { sectionsFor } from '../data/sections'
 import { loadSections, loadReferences, loadComments } from '../lib/papers'
+import { buildCitationReport } from '../lib/citations'
 
 export default function SubmissionPanel({ paper, userId }: { paper: Paper; userId?: string }) {
   const sectionDefs = useMemo(() => sectionsFor(paper.format), [paper.format])
@@ -35,11 +36,16 @@ export default function SubmissionPanel({ paper, userId }: { paper: Paper; userI
   const openComments = comments.filter((c) => !c.resolved).length
   const totalChars = sectionDefs.reduce((n, s) => n + (content[s.kind] ?? '').length, 0)
 
+  // 본문 인용 ↔ 참고문헌 연결 점검
+  const allText = sectionDefs.map((s) => content[s.kind] ?? '').join('\n')
+  const cite = buildCitationReport(allText, refs.length)
+
   const checks = [
     { ok: humans.some((m) => m.role === 'first_author'), label: '제1저자 지정', detail: humans.map((m) => m.name).filter(Boolean).join(', ') || '없음' },
     { ok: filledSections.length === sectionDefs.length, label: '모든 섹션 작성', detail: `${filledSections.length}/${sectionDefs.length} 섹션` },
     { ok: refs.length > 0, label: '참고문헌 등록', detail: `${refs.length}건` },
     { ok: openComments === 0, label: '미해결 코멘트 없음', detail: openComments === 0 ? '모두 해결' : `${openComments}건 남음` },
+    { ok: cite.broken.length === 0 && cite.uncited.length === 0, label: '인용 연결 정상', detail: cite.broken.length ? `깨진 번호 ${cite.broken.length}` : cite.uncited.length ? `미인용 ${cite.uncited.length}` : `본문 인용 ${cite.totalCitations}회` },
   ]
   const ready = checks.every((c) => c.ok)
 
@@ -191,6 +197,36 @@ ${secs}${refsHtml}
           </div>
           <p className="mt-2 text-xs text-white/50">총 {totalChars.toLocaleString()}자 · 참고문헌 {refs.length}건</p>
         </div>
+
+        {/* 인용 점검 */}
+        <div className="rounded-xl border border-ink-200 bg-white p-4">
+          <div className="mb-2 text-sm font-semibold">인용 연결 점검</div>
+          <p className="text-xs text-ink-500">
+            본문에 <code className="rounded bg-ink-100 px-1">[번호]</code> 로 인용하면 참고문헌 순번과 자동 연결됩니다.
+          </p>
+          <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="rounded-lg bg-ink-50 p-2">
+              <div className="text-lg font-bold text-ink-800">{cite.totalCitations}</div>
+              <div className="text-ink-400">본문 인용</div>
+            </div>
+            <div className="rounded-lg bg-amber-50 p-2">
+              <div className="text-lg font-bold text-amber-600">{cite.uncited.length}</div>
+              <div className="text-ink-400">미인용 문헌</div>
+            </div>
+            <div className="rounded-lg bg-red-50 p-2">
+              <div className="text-lg font-bold text-red-600">{cite.broken.length}</div>
+              <div className="text-ink-400">깨진 번호</div>
+            </div>
+          </div>
+          {cite.uncited.length > 0 && (
+            <p className="mt-2 text-xs text-amber-600">미인용: [{cite.uncited.join('], [')}] — 본문에서 인용되지 않았습니다.</p>
+          )}
+          {cite.broken.length > 0 && (
+            <p className="mt-1 text-xs text-red-600">
+              깨진 번호: [{cite.broken.join('], [')}] — 참고문헌 {refs.length}건 범위를 벗어났습니다.
+            </p>
+          )}
+        </div>
       </div>
 
       {/* 원고 미리보기 */}
@@ -215,12 +251,21 @@ ${secs}${refsHtml}
               <section>
                 <h2 className="border-b border-ink-100 pb-1 font-serif text-lg font-bold">참고문헌</h2>
                 <ol className="mt-2 space-y-1.5 text-sm text-ink-700">
-                  {refs.map((r) => (
-                    <li key={r.id} className="flex gap-2">
-                      <span className="text-ink-300">•</span>
-                      <span>{r.apa}</span>
-                    </li>
-                  ))}
+                  {refs.map((r, i) => {
+                    const used = cite.countByRef[i + 1] ?? 0
+                    return (
+                      <li key={r.id} className="flex gap-2">
+                        <span className="shrink-0 font-semibold text-gold-600">[{i + 1}]</span>
+                        <span className="flex-1">{r.apa}</span>
+                        <span
+                          className={`shrink-0 text-xs ${used ? 'text-ink-400' : 'text-amber-500'}`}
+                          title={used ? `본문 ${used}회 인용` : '본문에서 인용되지 않음'}
+                        >
+                          {used ? `${used}회` : '미인용'}
+                        </span>
+                      </li>
+                    )
+                  })}
                 </ol>
               </section>
             )}
