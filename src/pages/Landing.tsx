@@ -55,12 +55,12 @@ export default function Landing() {
     <div className="min-h-screen bg-ink-50 text-ink-900">
       {/* Nav */}
       <header className="sticky top-0 z-20 border-b border-ink-200/70 bg-ink-50/80 backdrop-blur">
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-6 py-4">
-          <div className="flex items-center gap-2">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-6 sm:py-4">
+          <div className="flex shrink-0 items-center gap-2">
             <Logo />
-            <span className="font-serif text-xl font-bold tracking-tight">Call for Papers</span>
+            <span className="font-serif text-lg font-bold tracking-tight sm:text-xl">Call for Papers</span>
           </div>
-          <nav className="flex flex-wrap items-center gap-4 text-sm text-ink-600 sm:gap-6">
+          <nav className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-600 sm:gap-x-6">
             <a href="#how" className="hidden hover:text-ink-900 lg:inline">작동 방식</a>
             <a href="#team" className="hidden hover:text-ink-900 lg:inline">팀 구성</a>
             <a href="#format" className="hidden hover:text-ink-900 lg:inline">논문 형식</a>

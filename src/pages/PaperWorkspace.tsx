@@ -72,7 +72,7 @@ export default function PaperWorkspace() {
   return (
     <div className="min-h-screen bg-ink-50">
       <AppHeader />
-      <main className="mx-auto max-w-[1600px] px-6 py-10">
+      <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 sm:py-10">
         <Link to="/dashboard" className="text-sm text-ink-500 hover:text-ink-900">
           ← 내 논문
         </Link>
@@ -91,7 +91,7 @@ export default function PaperWorkspace() {
               <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">공유받음</span>
             )}
           </div>
-          <h1 className="mt-3 font-serif text-2xl font-bold leading-snug">{paper.title}</h1>
+          <h1 className="mt-3 break-words font-serif text-2xl font-bold leading-snug">{paper.title}</h1>
           {paper.titleEn && <p className="mt-1 text-sm italic text-ink-400">{paper.titleEn}</p>}
           <p className="mt-4 leading-relaxed text-ink-600">{paper.summary}</p>
           <div className="mt-5 flex flex-wrap items-center gap-2">
@@ -150,7 +150,7 @@ export default function PaperWorkspace() {
         </div>
 
         {/* 탭 */}
-        <div className="mt-8 flex gap-2 border-b border-ink-200">
+        <div className="mt-8 flex flex-wrap gap-x-2 gap-y-1 border-b border-ink-200">
           <TabBtn active={tab === 'team'} onClick={() => setTab('team')}>
             팀 구성
           </TabBtn>

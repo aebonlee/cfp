@@ -263,7 +263,7 @@ ${secs}${refsHtml}
                     return (
                       <li key={r.id} className="flex gap-2">
                         <span className="shrink-0 font-semibold text-gold-600">[{i + 1}]</span>
-                        <span className="flex-1">{r.apa}</span>
+                        <span className="flex-1 break-words">{r.apa}</span>
                         <span
                           className={`shrink-0 text-xs ${used ? 'text-ink-400' : 'text-amber-500'}`}
                           title={used ? `본문 ${used}회 인용` : '본문에서 인용되지 않음'}

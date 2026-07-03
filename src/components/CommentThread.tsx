@@ -56,7 +56,7 @@ export default function CommentThread({
               <span className="font-semibold text-ink-600">{c.authorName}</span>
               <span>{c.createdAt.slice(5, 16).replace('T', ' ')}</span>
             </div>
-            <p className={`whitespace-pre-wrap leading-relaxed ${c.resolved ? 'line-through' : ''}`}>{c.body}</p>
+            <p className={`whitespace-pre-wrap break-words leading-relaxed ${c.resolved ? 'line-through' : ''}`}>{c.body}</p>
             <div className="mt-1.5 flex gap-3 text-xs">
               <button onClick={() => onResolve(c.id, !c.resolved)} className="text-gold-600 hover:underline">
                 {c.resolved ? '해결취소' : '해결'}

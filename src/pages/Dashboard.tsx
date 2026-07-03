@@ -37,7 +37,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-ink-50">
       <AppHeader />
-      <main className="mx-auto max-w-[1600px] px-6 py-12">
+      <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 sm:py-12">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-serif text-3xl font-bold">내 논문</h1>
@@ -105,7 +105,7 @@ function PaperCard({ paper }: { paper: Paper }) {
           </span>
         </div>
       </div>
-      <h3 className="mt-3 font-serif text-lg font-bold leading-snug group-hover:text-gold-600">{paper.title}</h3>
+      <h3 className="mt-3 break-words font-serif text-lg font-bold leading-snug group-hover:text-gold-600">{paper.title}</h3>
       <p className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-ink-500">{paper.summary}</p>
       <div className="mt-4 flex flex-wrap gap-1.5">
         {paper.method && (
