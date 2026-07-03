@@ -1,11 +1,20 @@
-// withpaper AI Edge Function — Claude 연동
-// AI 팀원(집필가/리뷰어/에디터)이 논문 섹션 초안을 쓰거나 검토한다.
+// withpaper/cfp AI Edge Function — 멀티 프로바이더(OpenAI / Claude)
+// AI 팀원(집필가/리뷰어/에디터/윤리점검)이 논문 섹션을 쓰거나 검토한다.
 //
 // 배포: supabase functions deploy withpaper-ai --no-verify-jwt
-// 시크릿: supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+// 시크릿(택1 이상):
+//   supabase secrets set OPENAI_API_KEY=sk-...        # OpenAI 사용
+//   supabase secrets set ANTHROPIC_API_KEY=sk-ant-... # Claude 사용
+// 선택:
+//   supabase secrets set AI_PROVIDER=openai|claude    # 기본 프로바이더 강제
+//   supabase secrets set OPENAI_MODEL=gpt-4o          # 기본 gpt-4o
+//   supabase secrets set ANTHROPIC_MODEL=claude-opus-4-8
 
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') ?? ''
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
-const MODEL = 'claude-opus-4-8'
+const OPENAI_MODEL = Deno.env.get('OPENAI_MODEL') ?? 'gpt-4o'
+const ANTHROPIC_MODEL = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-opus-4-8'
+const DEFAULT_PROVIDER = (Deno.env.get('AI_PROVIDER') ?? '').toLowerCase()
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -14,17 +23,28 @@ const CORS = {
 }
 
 type Role = 'ai_writer' | 'ai_reviewer' | 'ai_editor' | 'ai_integrity'
+type Provider = 'openai' | 'claude'
 
 interface Body {
   role: Role
-  section: string // 섹션명 (예: 서론, Methods)
+  section: string
   title: string
   summary: string
   lang: 'ko' | 'en'
   format: 'kci' | 'imrad'
   keywords?: string[]
   method?: string
-  draft?: string // 리뷰/에디터 모드에서 기존 초안
+  draft?: string
+  provider?: Provider // 요청별 프로바이더 지정(선택)
+}
+
+function pickProvider(body: Body): Provider {
+  const want = (body.provider ?? DEFAULT_PROVIDER) as Provider
+  if (want === 'openai' && OPENAI_API_KEY) return 'openai'
+  if (want === 'claude' && ANTHROPIC_API_KEY) return 'claude'
+  // 지정이 없거나 해당 키가 없으면 있는 키로 폴백(OpenAI 우선)
+  if (OPENAI_API_KEY) return 'openai'
+  return 'claude'
 }
 
 function systemPrompt(lang: 'ko' | 'en', format: 'kci' | 'imrad') {
@@ -56,50 +76,75 @@ function userPrompt(b: Body) {
   if (b.role === 'ai_integrity') {
     return `${meta}\n\n아래 원고를 연구윤리·유사도 관점에서 사전 점검해 주세요. 실제 표절 검사기가 아니라 투고 전 자가 점검입니다. 다음을 각각 항목·인용문과 함께 지적하세요:\n1) 출처·인용이 필요한데 누락된 주장(문장을 인용하고 어떤 근거가 필요한지)\n2) 표절 위험이 높은 상투적·일반론 문장(패러프레이즈 제안 포함)\n3) 과도한 직접 인용 또는 원문 의존\n4) 섹션 간 중복·자기표절 소지\n마지막에 '유사도 위험: 낮음/보통/높음'으로 종합 판정하세요.\n\n[원고]\n${b.draft ?? '(원고 없음)'}`
   }
-  // ai_editor
   return `${meta}\n\n아래 「${b.section}」 섹션 초안을 학술지 형식에 맞게 교정(문장 다듬기, 용어 일관성, 인용 표기 정리)해 주세요. 교정본 전문을 제시하고, 끝에 주요 변경사항을 3~5개로 요약하세요.\n\n[초안]\n${b.draft ?? '(초안 없음)'}`
+}
+
+async function callOpenAI(system: string, user: string) {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      max_tokens: 4000,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+    }),
+  })
+  if (!res.ok) return { error: 'OpenAI API 오류', status: res.status, detail: await res.text() }
+  const data = await res.json()
+  const text = (data.choices?.[0]?.message?.content ?? '').trim()
+  return { text, usage: data.usage, model: OPENAI_MODEL, provider: 'openai' as const }
+}
+
+async function callClaude(system: string, user: string) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: ANTHROPIC_MODEL,
+      max_tokens: 8000,
+      thinking: { type: 'adaptive' },
+      system,
+      messages: [{ role: 'user', content: user }],
+    }),
+  })
+  if (!res.ok) return { error: 'Claude API 오류', status: res.status, detail: await res.text() }
+  const data = await res.json()
+  const text = (data.content ?? [])
+    .filter((b: { type: string }) => b.type === 'text')
+    .map((b: { text: string }) => b.text)
+    .join('\n')
+    .trim()
+  return { text, usage: data.usage, model: ANTHROPIC_MODEL, provider: 'claude' as const }
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
 
-  if (!ANTHROPIC_API_KEY) {
-    return json({ error: 'ANTHROPIC_API_KEY 미설정' }, 500)
+  if (!OPENAI_API_KEY && !ANTHROPIC_API_KEY) {
+    return json({ error: 'AI 키 미설정 (OPENAI_API_KEY 또는 ANTHROPIC_API_KEY)' }, 500)
   }
 
   try {
     const body = (await req.json()) as Body
     if (!body?.section || !body?.title) return json({ error: 'section, title 필수' }, 400)
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 8000,
-        thinking: { type: 'adaptive' },
-        system: systemPrompt(body.lang ?? 'ko', body.format ?? 'kci'),
-        messages: [{ role: 'user', content: userPrompt(body) }],
-      }),
-    })
+    const system = systemPrompt(body.lang ?? 'ko', body.format ?? 'kci')
+    const user = userPrompt(body)
+    const provider = pickProvider(body)
 
-    if (!res.ok) {
-      const detail = await res.text()
-      return json({ error: 'Claude API 오류', status: res.status, detail }, 502)
-    }
-
-    const data = await res.json()
-    const text = (data.content ?? [])
-      .filter((b: { type: string }) => b.type === 'text')
-      .map((b: { text: string }) => b.text)
-      .join('\n')
-      .trim()
-
-    return json({ text, usage: data.usage, model: MODEL })
+    const out = provider === 'openai' ? await callOpenAI(system, user) : await callClaude(system, user)
+    if ('error' in out) return json(out, 502)
+    return json(out)
   } catch (e) {
     return json({ error: String(e) }, 500)
   }
