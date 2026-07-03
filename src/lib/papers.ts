@@ -1,5 +1,5 @@
 // 논문 데이터 파사드: 로그인(userId 있음) → Supabase(wp_), 비로그인 → localStorage
-import type { Paper, TeamMember, Reference } from '../types'
+import type { Paper, TeamMember, Reference, Comment } from '../types'
 import * as db from './db'
 import * as local from './store'
 
@@ -61,4 +61,36 @@ export async function updateReference(paperId: string, id: string, apa: string, 
 export async function deleteReference(paperId: string, id: string, userId?: string): Promise<void> {
   if (userId) return db.deleteReference(id)
   local.deleteReference(paperId, id)
+}
+
+// ---- 코멘트 ----
+export async function loadComments(paperId: string, userId?: string): Promise<Comment[]> {
+  if (userId) return db.listComments(paperId)
+  return local.getComments(paperId)
+}
+
+export async function addComment(
+  paperId: string,
+  sectionKind: string,
+  anchor: string,
+  body: string,
+  author: { id?: string; name: string },
+): Promise<Comment | undefined> {
+  if (author.id) return db.addComment(paperId, sectionKind, anchor, body, author.id, author.name)
+  return local.addComment(paperId, sectionKind, anchor, body, author.name)
+}
+
+export async function resolveComment(
+  paperId: string,
+  id: string,
+  resolved: boolean,
+  userId?: string,
+): Promise<void> {
+  if (userId) return db.setCommentResolved(id, resolved)
+  local.setCommentResolved(paperId, id, resolved)
+}
+
+export async function removeComment(paperId: string, id: string, userId?: string): Promise<void> {
+  if (userId) return db.deleteComment(id)
+  local.deleteComment(paperId, id)
 }

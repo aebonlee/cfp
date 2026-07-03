@@ -1,4 +1,4 @@
-import type { Paper, TeamMember, Reference } from '../types'
+import type { Paper, TeamMember, Reference, Comment } from '../types'
 import { SEED_TOPICS } from '../data/topics'
 
 // 논문 프로젝트 로컬 스토어.
@@ -147,6 +147,58 @@ export function deleteReference(paperId: string, id: string) {
   const all = loadRefs()
   all[paperId] = (all[paperId] ?? []).filter((r) => r.id !== id)
   saveRefs(all)
+}
+
+// ---- 코멘트 (localStorage) ----
+const COMMENT_KEY = 'withpaper.comments.v1'
+
+function loadComments(): Record<string, Comment[]> {
+  try {
+    return JSON.parse(localStorage.getItem(COMMENT_KEY) || '{}') as Record<string, Comment[]>
+  } catch {
+    return {}
+  }
+}
+function saveComments(c: Record<string, Comment[]>) {
+  try {
+    localStorage.setItem(COMMENT_KEY, JSON.stringify(c))
+  } catch {
+    /* 무시 */
+  }
+}
+export function getComments(paperId: string): Comment[] {
+  return loadComments()[paperId] ?? []
+}
+export function addComment(
+  paperId: string,
+  sectionKind: string,
+  anchor: string,
+  body: string,
+  authorName: string,
+): Comment {
+  const c: Comment = {
+    id: `c-${Date.now()}-${Math.floor(Math.random() * 1e4)}`,
+    sectionKind,
+    anchor,
+    body,
+    authorName,
+    resolved: false,
+    createdAt: new Date().toISOString(),
+  }
+  const all = loadComments()
+  all[paperId] = [...(all[paperId] ?? []), c]
+  saveComments(all)
+  return c
+}
+export function setCommentResolved(paperId: string, id: string, resolved: boolean) {
+  const all = loadComments()
+  all[paperId] = (all[paperId] ?? []).map((c) => (c.id === id ? { ...c, resolved } : c))
+  saveComments(all)
+}
+export function deleteComment(paperId: string, id: string) {
+  const all = loadComments()
+  all[paperId] = (all[paperId] ?? []).filter((c) => c.id !== id)
+  saveComments(all)
 }
 
 export function setSectionContent(paperId: string, kind: string, content: string) {

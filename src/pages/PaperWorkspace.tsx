@@ -58,6 +58,8 @@ export default function PaperWorkspace() {
 
   const humans = paper.members.filter((m) => m.type === 'human')
   const ais = paper.members.filter((m) => m.type === 'ai')
+  const authorName =
+    user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '이애본'
 
   return (
     <div className="min-h-screen bg-ink-50">
@@ -141,7 +143,7 @@ export default function PaperWorkspace() {
               먼저 <b>팀 구성</b> 탭에서 팀을 만들면 섹션별 집필과 AI 집필·검토·교정을 시작할 수 있습니다.
             </div>
           ) : (
-            <SectionEditor paper={paper} userId={user?.id} />
+            <SectionEditor paper={paper} userId={user?.id} userName={authorName} />
           )}
         </div>
       </main>

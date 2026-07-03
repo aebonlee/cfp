@@ -48,6 +48,18 @@ export interface Reference {
   citationKey?: string
 }
 
+/** 섹션·단락 코멘트(리뷰 스레드) */
+export interface Comment {
+  id: string
+  sectionKind: string
+  anchor: string // 단락 앵커(단락 인덱스). ''이면 섹션 전체 코멘트
+  body: string
+  authorName: string
+  authorId?: string
+  resolved: boolean
+  createdAt: string
+}
+
 export const ROLE_LABEL: Record<MemberRole, string> = {
   first_author: '제1저자',
   corresponding: '교신저자',

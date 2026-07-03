@@ -1,5 +1,5 @@
 import { supabase, TABLES } from './supabase'
-import type { Paper, TeamMember, MemberRole, MemberType, PaperStatus, Reference } from '../types'
+import type { Paper, TeamMember, MemberRole, MemberType, PaperStatus, Reference, Comment } from '../types'
 import { SEED_TOPICS } from '../data/topics'
 
 // Supabase(wp_) 영구 저장 레이어. 로그인 사용자 기준으로 동작한다.
@@ -253,4 +253,70 @@ export async function updateReference(id: string, apa: string): Promise<void> {
 
 export async function deleteReference(id: string): Promise<void> {
   await supabase.from(TABLES.references).delete().eq('id', id)
+}
+
+// ---- 코멘트(리뷰 스레드) ----
+interface CommentRow {
+  id: string
+  section_kind: string | null
+  anchor: string | null
+  body: string
+  author_name: string | null
+  author_id: string | null
+  resolved: boolean
+  created_at: string
+}
+
+function toComment(r: CommentRow): Comment {
+  return {
+    id: r.id,
+    sectionKind: r.section_kind ?? '',
+    anchor: r.anchor ?? '',
+    body: r.body,
+    authorName: r.author_name ?? '익명',
+    authorId: r.author_id ?? undefined,
+    resolved: r.resolved,
+    createdAt: r.created_at,
+  }
+}
+
+/** 논문의 모든 코멘트 로드(섹션·단락별 그룹은 클라이언트에서) */
+export async function listComments(paperId: string): Promise<Comment[]> {
+  const { data } = await supabase
+    .from(TABLES.comments)
+    .select('id, section_kind, anchor, body, author_name, author_id, resolved, created_at')
+    .eq('paper_id', paperId)
+    .order('created_at', { ascending: true })
+  return ((data ?? []) as CommentRow[]).map(toComment)
+}
+
+export async function addComment(
+  paperId: string,
+  sectionKind: string,
+  anchor: string,
+  body: string,
+  authorId: string,
+  authorName: string,
+): Promise<Comment | undefined> {
+  const { data } = await supabase
+    .from(TABLES.comments)
+    .insert({
+      paper_id: paperId,
+      section_kind: sectionKind,
+      anchor,
+      body,
+      author_id: authorId,
+      author_name: authorName,
+    })
+    .select('id, section_kind, anchor, body, author_name, author_id, resolved, created_at')
+    .single()
+  return data ? toComment(data as CommentRow) : undefined
+}
+
+export async function setCommentResolved(id: string, resolved: boolean): Promise<void> {
+  await supabase.from(TABLES.comments).update({ resolved }).eq('id', id)
+}
+
+export async function deleteComment(id: string): Promise<void> {
+  await supabase.from(TABLES.comments).delete().eq('id', id)
 }
