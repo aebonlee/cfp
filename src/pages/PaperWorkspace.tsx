@@ -2,12 +2,9 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
 import TeamBuilder from '../components/TeamBuilder'
+import SectionEditor from '../components/SectionEditor'
 import { getPaper, setTeam } from '../lib/store'
-import { requestAi } from '../lib/ai'
-import { FORMAT_LABEL, ROLE_LABEL, STATUS_LABEL, type Paper, type TeamMember } from '../types'
-
-const KCI_SECTIONS = ['국문초록', '서론', '이론적 배경', '연구방법', '연구결과', '논의', '결론', '참고문헌']
-const IMRAD_SECTIONS = ['Abstract', 'Introduction', 'Related Work', 'Methods', 'Results', 'Discussion', 'Conclusion', 'References']
+import { FORMAT_LABEL, ROLE_LABEL, STATUS_LABEL, type TeamMember } from '../types'
 
 export default function PaperWorkspace() {
   const { id } = useParams()
@@ -27,8 +24,6 @@ export default function PaperWorkspace() {
       </div>
     )
   }
-
-  const sections = paper.format === 'imrad' ? IMRAD_SECTIONS : KCI_SECTIONS
 
   function handleSaveTeam(members: TeamMember[]) {
     if (!paper) return
@@ -101,15 +96,19 @@ export default function PaperWorkspace() {
             팀 구성
           </TabBtn>
           <TabBtn active={tab === 'outline'} onClick={() => setTab('outline')}>
-            논문 구성
+            집필 · 논문 구성
           </TabBtn>
         </div>
 
         <div className="mt-8">
           {tab === 'team' ? (
             <TeamBuilder initial={paper.members} onSave={handleSaveTeam} />
+          ) : paper.members.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-gold-400 bg-gold-500/5 p-6 text-center text-sm text-ink-600">
+              먼저 <b>팀 구성</b> 탭에서 팀을 만들면 섹션별 집필과 AI 집필·검토·교정을 시작할 수 있습니다.
+            </div>
           ) : (
-            <Outline paper={paper} sections={sections} teamReady={paper.members.length > 0} />
+            <SectionEditor paper={paper} />
           )}
         </div>
       </main>
@@ -130,64 +129,3 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
   )
 }
 
-function Outline({ paper, sections, teamReady }: { paper: Paper; sections: string[]; teamReady: boolean }) {
-  const [active, setActive] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState('')
-
-  async function requestDraft(section: string) {
-    setActive(section)
-    setLoading(true)
-    setResult('')
-    const res = await requestAi({ role: 'ai_writer', section, paper })
-    setResult(res.text)
-    setLoading(false)
-  }
-
-  return (
-    <div>
-      {!teamReady && (
-        <div className="mb-6 rounded-xl border border-dashed border-gold-400 bg-gold-500/5 p-5 text-sm text-ink-600">
-          먼저 <b>팀 구성</b> 탭에서 팀을 만들면, 각 섹션을 팀원에게 배정하고 AI 초안을 요청할 수 있습니다.
-        </div>
-      )}
-      <div className="space-y-3">
-        {sections.map((s, i) => (
-          <div key={s} className="flex items-center gap-4 rounded-xl border border-ink-200 bg-white p-4">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink-100 text-sm font-semibold text-ink-600">
-              {i + 1}
-            </span>
-            <span className="flex-1 font-medium">{s}</span>
-            <button
-              disabled={!teamReady || loading}
-              onClick={() => requestDraft(s)}
-              className="rounded-full border border-ink-300 px-4 py-1.5 text-xs font-medium text-ink-700 transition hover:border-gold-500 hover:text-gold-600 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {loading && active === s ? '작성 중…' : 'AI 초안 요청'}
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {active && (
-        <div className="mt-6 rounded-2xl border border-ink-200 bg-white p-6">
-          <div className="mb-3 flex items-center justify-between">
-            <h4 className="font-bold">
-              「{active}」 AI 초안 <span className="text-sm font-normal text-ink-400">· Claude</span>
-            </h4>
-            <button onClick={() => setActive(null)} className="text-sm text-ink-400 hover:text-ink-700">
-              닫기
-            </button>
-          </div>
-          {loading ? (
-            <p className="py-8 text-center text-sm text-ink-400">AI 팀원이 초안을 작성하고 있습니다…</p>
-          ) : (
-            <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-ink-50 p-4 text-sm leading-relaxed text-ink-800">
-              {result}
-            </pre>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}

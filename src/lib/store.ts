@@ -85,3 +85,42 @@ export function createPaper(input: Partial<Paper> & { title: string }): Paper {
 export function newMemberId() {
   return `m-${Date.now()}-${Math.floor(Math.random() * 1e4)}`
 }
+
+// ---- 섹션 내용 저장 (paperId → { kind → content }) ----
+const SECTION_KEY = 'withpaper.sections.v1'
+
+type SectionStore = Record<string, Record<string, string>>
+
+function loadSections(): SectionStore {
+  try {
+    return JSON.parse(localStorage.getItem(SECTION_KEY) || '{}') as SectionStore
+  } catch {
+    return {}
+  }
+}
+
+function saveSections(s: SectionStore) {
+  try {
+    localStorage.setItem(SECTION_KEY, JSON.stringify(s))
+  } catch {
+    /* 무시 */
+  }
+}
+
+export function getSectionContent(paperId: string): Record<string, string> {
+  return loadSections()[paperId] ?? {}
+}
+
+export function setSectionContent(paperId: string, kind: string, content: string) {
+  const all = loadSections()
+  all[paperId] = { ...(all[paperId] ?? {}), [kind]: content }
+  saveSections(all)
+
+  // 내용이 채워지기 시작하면 논문 상태를 '집필 중'으로
+  const papers = load()
+  const p = papers.find((x) => x.id === paperId)
+  if (p && content.trim() && (p.status === 'topic' || p.status === 'team')) {
+    p.status = 'writing'
+    save(papers)
+  }
+}
