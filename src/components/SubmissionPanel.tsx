@@ -164,7 +164,7 @@ ${secs}${refsHtml}
   return (
     <div className="grid gap-8 lg:grid-cols-[360px_1fr]">
       {/* 체크리스트 + 내보내기 */}
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-6">
         <div>
           <div className="flex items-center gap-2">
             <h3 className="font-serif text-xl font-bold">게재 준비</h3>
@@ -245,7 +245,7 @@ ${secs}${refsHtml}
       </div>
 
       {/* 원고 미리보기 */}
-      <div className="rounded-2xl border border-ink-200 bg-white p-8">
+      <div className="min-w-0 rounded-2xl border border-ink-200 bg-white p-4 sm:p-8">
         <div className="mx-auto max-w-2xl">
           <h1 className="text-center font-serif text-2xl font-bold leading-snug">{paper.title}</h1>
           {paper.titleEn && <p className="mt-1 text-center text-sm italic text-ink-400">{paper.titleEn}</p>}

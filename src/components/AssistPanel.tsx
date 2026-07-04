@@ -74,7 +74,7 @@ export default function AssistPanel({
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       {/* 원문 + 지시 */}
-      <div className="space-y-4">
+      <div className="min-w-0 space-y-4">
         <div>
           <h3 className="font-serif text-xl font-bold">AI 편집 도우미</h3>
           <p className="mt-1 text-sm text-ink-500">섹션을 고르고 원하는 편집을 요청하면 수정본을 만들어 드립니다.</p>
@@ -136,7 +136,7 @@ export default function AssistPanel({
       </div>
 
       {/* 결과 */}
-      <div>
+      <div className="min-w-0">
         <div className="mb-2 flex items-center justify-between">
           <h4 className="font-bold">
             수정본 <span className="text-sm font-normal text-ink-400">· AI</span>

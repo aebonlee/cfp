@@ -53,7 +53,7 @@ export default function IntegrityPanel({
   return (
     <div className="grid gap-8 lg:grid-cols-2">
       {/* 내부 중복 검사 */}
-      <div>
+      <div className="min-w-0">
         <div className="mb-3 flex items-center gap-2">
           <h3 className="font-serif text-xl font-bold">내부 중복 검사</h3>
           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${level.c}`}>유사도 위험 {level.t}</span>
@@ -86,7 +86,7 @@ export default function IntegrityPanel({
       </div>
 
       {/* AI 연구윤리 점검 */}
-      <div>
+      <div className="min-w-0">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="font-serif text-xl font-bold">AI 연구윤리·유사도 점검</h3>
           <button

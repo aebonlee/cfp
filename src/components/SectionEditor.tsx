@@ -226,7 +226,7 @@ export default function SectionEditor({
       </aside>
 
       {/* 에디터 */}
-      <div>
+      <div className="min-w-0">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <h3 className="font-serif text-xl font-bold">{def.title}</h3>
