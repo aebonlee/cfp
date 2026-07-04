@@ -83,8 +83,15 @@ Deno.serve(async (req) => {
       count('wp_references'),
     ])
 
-    const { data: secs } = await db.from('wp_sections').select('content')
-    const filledSections = (secs ?? []).filter((s: { content: string }) => (s.content ?? '').trim()).length
+    const { data: secs } = await db.from('wp_sections').select('paper_id, content')
+    const secByPaper: Record<string, number> = {}
+    let filledSections = 0
+    for (const s of secs ?? []) {
+      if ((s.content ?? '').trim()) {
+        filledSections++
+        secByPaper[s.paper_id] = (secByPaper[s.paper_id] ?? 0) + 1
+      }
+    }
 
     // 논문(사용자별·상태·추이·목록)
     const { data: pRows } = await db
@@ -113,10 +120,22 @@ Deno.serve(async (req) => {
     }))
     users.sort((a, b) => b.papers - a.papers)
 
+    // 논문 상세(소유자 이메일 + 작성 섹션 수)
+    const emailById: Record<string, string> = Object.fromEntries(
+      authUsers.map((u: any) => [u.id, u.email ?? '(이메일 없음)']),
+    )
+    const titleById: Record<string, string> = Object.fromEntries(papers.map((p) => [p.id, p.title]))
+    const papersDetailed = papers.map((p) => ({
+      ...p,
+      owner_email: emailById[p.owner_id] ?? '—',
+      sections: secByPaper[p.id] ?? 0,
+    }))
+
     // AI 사용량/비용
     const { data: runs } = await db
       .from('wp_ai_runs')
-      .select('model, provider, role, input_tokens, output_tokens, tokens, created_at')
+      .select('model, provider, role, input_tokens, output_tokens, tokens, created_at, paper_id')
+      .order('created_at', { ascending: false })
     const runRows = runs ?? []
     const byModel: Record<string, { runs: number; inTok: number; outTok: number; cost: number }> = {}
     const byRole: Record<string, number> = {}
@@ -176,9 +195,23 @@ Deno.serve(async (req) => {
       usage: {
         byModel: Object.entries(byModel).map(([model, v]) => ({ model, ...v, cost: Number(v.cost.toFixed(4)) })),
         byRole,
+        recent: runRows.slice(0, 50).map((r) => {
+          const it = r.input_tokens ?? 0
+          const ot = r.output_tokens ?? Math.max(0, (r.tokens ?? 0) - it)
+          return {
+            model: r.model,
+            provider: r.provider,
+            role: r.role,
+            inTok: it,
+            outTok: ot,
+            cost: Number(costOf(r.model ?? '', it, ot).toFixed(4)),
+            created_at: r.created_at,
+            paper: titleById[r.paper_id] ?? null,
+          }
+        }),
       },
       trends,
-      recent: papers.slice(0, 30),
+      papers: papersDetailed,
     })
   } catch (e) {
     return json({ error: String(e) }, 500)
