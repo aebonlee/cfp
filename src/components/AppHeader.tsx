@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { isAdmin } from '../lib/admin'
 import LoginModal from './LoginModal'
 
 export function Logo({ className = 'h-7 w-7' }: { className?: string }) {
@@ -40,6 +41,11 @@ export default function AppHeader() {
             <Link to="/new" className="hover:text-ink-900">
               새 논문
             </Link>
+            {isAdmin(user?.email) && (
+              <Link to="/admin" className="font-medium text-gold-600 hover:text-gold-700">
+                관리자
+              </Link>
+            )}
             {user ? (
               <div className="flex items-center gap-3">
                 <span className="hidden text-ink-700 sm:inline">{name}님</span>

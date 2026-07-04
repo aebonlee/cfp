@@ -3,6 +3,7 @@ import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
 import PaperWorkspace from './pages/PaperWorkspace'
 import NewPaper from './pages/NewPaper'
+import AdminDashboard from './pages/AdminDashboard'
 
 export default function App() {
   return (
@@ -11,6 +12,7 @@ export default function App() {
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/new" element={<NewPaper />} />
       <Route path="/paper/:id" element={<PaperWorkspace />} />
+      <Route path="/admin" element={<AdminDashboard />} />
     </Routes>
   )
 }
