@@ -76,10 +76,20 @@ export function createPaper(input: Partial<Paper> & { title: string }): Paper {
     status: 'topic',
     members: [],
     seed: false,
+    recruiting: input.recruiting ?? false,
     createdAt: new Date().toISOString().slice(0, 10),
   }
   upsertPaper(paper)
   return paper
+}
+
+export function setRecruitingLocal(paperId: string, recruiting: boolean) {
+  const papers = load()
+  const p = papers.find((x) => x.id === paperId)
+  if (p) {
+    p.recruiting = recruiting
+    save(papers)
+  }
 }
 
 export function newMemberId() {

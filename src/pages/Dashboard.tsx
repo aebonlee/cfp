@@ -100,6 +100,9 @@ function PaperCard({ paper }: { paper: Paper }) {
           {paper.shared && (
             <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-semibold text-indigo-700">공유받음</span>
           )}
+          {paper.recruiting && (
+            <span className="rounded-full bg-gold-500/15 px-2.5 py-1 text-xs font-semibold text-gold-600">모집 중</span>
+          )}
           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLE[paper.status]}`}>
             {STATUS_LABEL[paper.status]}
           </span>

@@ -7,7 +7,7 @@ import ReferencesPanel from '../components/ReferencesPanel'
 import SubmissionPanel from '../components/SubmissionPanel'
 import IntegrityPanel from '../components/IntegrityPanel'
 import AssistPanel from '../components/AssistPanel'
-import { loadPaper, saveTeam } from '../lib/papers'
+import { loadPaper, saveTeam, setRecruiting } from '../lib/papers'
 import { getPresetId, setPresetId } from '../lib/store'
 import { PRESETS, findPreset } from '../data/presets'
 import { resolveSections } from '../data/sections'
@@ -90,6 +90,23 @@ export default function PaperWorkspace() {
             )}
             {paper.shared && (
               <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">공유받음</span>
+            )}
+            {paper.recruiting ? (
+              <span className="rounded-full bg-gold-500/15 px-3 py-1 text-xs font-semibold text-gold-600">공개 모집 중</span>
+            ) : (
+              <span className="rounded-full bg-ink-100 px-3 py-1 text-xs text-ink-500">비공개</span>
+            )}
+            {!paper.shared && (
+              <button
+                onClick={async () => {
+                  const next = !paper.recruiting
+                  await setRecruiting(paper.id, next, user?.id)
+                  setPaper({ ...paper, recruiting: next })
+                }}
+                className="rounded-full border border-ink-300 px-3 py-1 text-xs font-medium text-ink-700 transition hover:border-gold-500 hover:text-gold-600"
+              >
+                {paper.recruiting ? '모집 마감' : '팀원 공개 모집하기'}
+              </button>
             )}
           </div>
           <h1 className="mt-3 break-words font-serif text-2xl font-bold leading-snug">{paper.title}</h1>

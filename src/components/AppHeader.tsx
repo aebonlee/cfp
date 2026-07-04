@@ -35,6 +35,9 @@ export default function AppHeader() {
             <a href="/#team" className="hidden hover:text-ink-900 lg:inline">팀 구성</a>
             <a href="/#format" className="hidden hover:text-ink-900 lg:inline">논문 형식</a>
             <span className="hidden text-ink-200 lg:inline">|</span>
+            <Link to="/recruit" className="hover:text-ink-900">
+              팀원 모집
+            </Link>
             <Link to="/dashboard" className="hover:text-ink-900">
               내 논문
             </Link>

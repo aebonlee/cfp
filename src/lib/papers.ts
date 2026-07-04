@@ -44,6 +44,23 @@ export async function createPaper(
   return local.createPaper(input)
 }
 
+export async function setRecruiting(paperId: string, recruiting: boolean, userId?: string): Promise<void> {
+  if (userId) return db.setRecruiting(paperId, recruiting)
+  local.setRecruitingLocal(paperId, recruiting)
+}
+
+/** 공개 모집 게시판 (항상 DB 조회, 비로그인 포함) */
+export async function loadRecruiting(): Promise<Paper[]> {
+  return db.listRecruiting()
+}
+
+export async function joinRecruiting(
+  paperId: string,
+  user: { id: string; name: string },
+): Promise<{ error?: string }> {
+  return db.joinPaper(paperId, user.id, user.name)
+}
+
 export async function loadSections(paperId: string, userId?: string): Promise<Record<string, string>> {
   if (userId) return db.getSections(paperId)
   return local.getSectionContent(paperId)

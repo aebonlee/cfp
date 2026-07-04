@@ -40,6 +40,7 @@ export interface Paper {
   createdAt: string
   shared?: boolean // 다른 사람이 나를 공동저자로 초대한 논문
   progress?: number // 완성도(%) — 채워진 섹션 비율
+  recruiting?: boolean // 팀원 공개 모집 여부
 }
 
 /** 참고문헌 항목 */

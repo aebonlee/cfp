@@ -19,6 +19,7 @@ interface PaperRow {
   seed: boolean
   source_file: string | null
   created_at: string
+  recruiting?: boolean | null
 }
 
 interface MemberRow {
@@ -60,6 +61,7 @@ function toPaper(row: PaperRow, members: TeamMember[], viewerId?: string): Paper
     sourceFile: row.source_file ?? undefined,
     createdAt: (row.created_at ?? '').slice(0, 10),
     shared: viewerId ? row.owner_id !== viewerId : false,
+    recruiting: !!row.recruiting,
   }
 }
 
@@ -166,10 +168,34 @@ export async function createPaper(
       method: input.method ?? null,
       status: 'topic',
       seed: false,
+      recruiting: input.recruiting ?? false,
     })
     .select('*')
     .single()
   return data ? toPaper(data as PaperRow, []) : undefined
+}
+
+/** 공개 모집 여부 토글 */
+export async function setRecruiting(paperId: string, recruiting: boolean): Promise<void> {
+  await supabase.from(TABLES.papers).update({ recruiting }).eq('id', paperId)
+}
+
+/** 공개 모집 중인 논문 목록 (비로그인 포함 누구나) */
+export async function listRecruiting(): Promise<Paper[]> {
+  const { data } = await supabase
+    .from(TABLES.papers)
+    .select('*')
+    .eq('recruiting', true)
+    .order('created_at', { ascending: false })
+  return ((data ?? []) as PaperRow[]).map((r) => toPaper(r, []))
+}
+
+/** 공개 논문에 본인을 공동저자로 셀프 조인 */
+export async function joinPaper(paperId: string, userId: string, name: string): Promise<{ error?: string }> {
+  const { error } = await supabase
+    .from(TABLES.members)
+    .insert({ paper_id: paperId, user_id: userId, type: 'human', role: 'coauthor', name })
+  return error ? { error: error.message } : {}
 }
 
 /** 팀원 전체 교체 + 상태 갱신 */

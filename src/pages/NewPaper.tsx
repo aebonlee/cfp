@@ -14,6 +14,7 @@ export default function NewPaper() {
   const [summary, setSummary] = useState('')
   const [keywords, setKeywords] = useState('')
   const [presetId, setPreset] = useState<string>('')
+  const [recruiting, setRecruiting] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const preset = findPreset(presetId)
@@ -30,6 +31,7 @@ export default function NewPaper() {
         keywords: keywords.split(',').map((k) => k.trim()).filter(Boolean),
         format,
         lang: preset?.lang ?? 'ko',
+        recruiting,
       },
       user?.id,
     )
@@ -98,6 +100,21 @@ export default function NewPaper() {
               {preset ? preset.guide : '선택하지 않으면 KCI 표준 양식으로 시작합니다.'}
             </p>
           </Field>
+
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-ink-200 bg-white p-4">
+            <input
+              type="checkbox"
+              checked={recruiting}
+              onChange={(e) => setRecruiting(e.target.checked)}
+              className="mt-0.5 h-4 w-4 accent-gold-500"
+            />
+            <span className="text-sm">
+              <b>팀원 공개 모집</b>
+              <span className="ml-2 text-xs text-ink-400">
+                모집 게시판에 공개되어 누구나 주제를 보고 참여 신청할 수 있습니다. (본문은 참여 후 공개)
+              </span>
+            </span>
+          </label>
 
           <button
             type="submit"
