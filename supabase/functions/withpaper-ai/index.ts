@@ -22,7 +22,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-type Role = 'ai_writer' | 'ai_reviewer' | 'ai_editor' | 'ai_integrity'
+type Role = 'ai_writer' | 'ai_reviewer' | 'ai_editor' | 'ai_integrity' | 'ai_assist'
 type Provider = 'openai' | 'claude'
 
 interface Body {
@@ -35,6 +35,7 @@ interface Body {
   keywords?: string[]
   method?: string
   draft?: string
+  instruction?: string // ai_assist: 사용자 자유 지시
   provider?: Provider // 요청별 프로바이더 지정(선택)
 }
 
@@ -72,6 +73,10 @@ function userPrompt(b: Body) {
   }
   if (b.role === 'ai_reviewer') {
     return `${meta}\n\n아래는 「${b.section}」 섹션의 현재 초안입니다. 학술지 심사 기준으로 (1) 논리·근거, (2) 형식·인용, (3) 문장·표현 관점에서 구체적인 개선점을 항목별로 제시하고, 우선순위를 매겨 주세요.\n\n[초안]\n${b.draft ?? '(초안 없음)'}`
+  }
+  if (b.role === 'ai_assist') {
+    const instr = (b.instruction ?? '').trim() || '학술적 정확성을 유지하며 더 명료하게 다듬어 주세요.'
+    return `${meta}\n\n아래 「${b.section}」 텍스트를 다음 지시에 따라 수정·편집해 주세요. 학술적 정확성과 사실을 지키고(없는 인용·데이터 생성 금지), 결과는 수정된 본문 전문만 제시하세요.\n\n[지시]\n${instr}\n\n[원문]\n${b.draft ?? '(원문 없음)'}`
   }
   if (b.role === 'ai_integrity') {
     return `${meta}\n\n아래 원고를 연구윤리·유사도 관점에서 사전 점검해 주세요. 실제 표절 검사기가 아니라 투고 전 자가 점검입니다. 다음을 각각 항목·인용문과 함께 지적하세요:\n1) 출처·인용이 필요한데 누락된 주장(문장을 인용하고 어떤 근거가 필요한지)\n2) 표절 위험이 높은 상투적·일반론 문장(패러프레이즈 제안 포함)\n3) 과도한 직접 인용 또는 원문 의존\n4) 섹션 간 중복·자기표절 소지\n마지막에 '유사도 위험: 낮음/보통/높음'으로 종합 판정하세요.\n\n[원고]\n${b.draft ?? '(원고 없음)'}`

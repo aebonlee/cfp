@@ -1,13 +1,14 @@
 import { supabase } from './supabase'
 import type { Paper } from '../types'
 
-export type AiRole = 'ai_writer' | 'ai_reviewer' | 'ai_editor' | 'ai_integrity'
+export type AiRole = 'ai_writer' | 'ai_reviewer' | 'ai_editor' | 'ai_integrity' | 'ai_assist'
 
 export interface AiRequest {
   role: AiRole
   section: string
   paper: Paper
   draft?: string
+  instruction?: string
 }
 
 export interface AiResponse {
@@ -32,6 +33,7 @@ export async function requestAi(req: AiRequest): Promise<AiResponse> {
     keywords: paper.keywords,
     method: paper.method,
     draft: req.draft,
+    instruction: req.instruction,
   }
 
   const { data, error } = await supabase.functions.invoke('withpaper-ai', { body: payload })
@@ -55,4 +57,14 @@ export async function formatReferences(paper: Paper, raw: string): Promise<AiRes
 /** 원고 전체를 연구윤리·유사도 관점에서 AI 사전 점검 */
 export async function checkIntegrity(paper: Paper, manuscript: string): Promise<AiResponse> {
   return requestAi({ role: 'ai_integrity', section: '원고 전체', paper, draft: manuscript })
+}
+
+/** 자유 지시로 텍스트 수정·편집 도움 */
+export async function assistEdit(
+  paper: Paper,
+  section: string,
+  text: string,
+  instruction: string,
+): Promise<AiResponse> {
+  return requestAi({ role: 'ai_assist', section, paper, draft: text, instruction })
 }

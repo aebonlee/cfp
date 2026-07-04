@@ -6,6 +6,7 @@ import SectionEditor from '../components/SectionEditor'
 import ReferencesPanel from '../components/ReferencesPanel'
 import SubmissionPanel from '../components/SubmissionPanel'
 import IntegrityPanel from '../components/IntegrityPanel'
+import AssistPanel from '../components/AssistPanel'
 import { loadPaper, saveTeam } from '../lib/papers'
 import { getPresetId, setPresetId } from '../lib/store'
 import { PRESETS, findPreset } from '../data/presets'
@@ -18,7 +19,7 @@ export default function PaperWorkspace() {
   const { user } = useAuth()
   const [paper, setPaper] = useState<Paper | undefined>(undefined)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'team' | 'outline' | 'refs' | 'integrity' | 'submit'>('team')
+  const [tab, setTab] = useState<'team' | 'outline' | 'assist' | 'refs' | 'integrity' | 'submit'>('team')
   const [presetId, setPreset] = useState<string | undefined>(() => (id ? getPresetId(id) : undefined))
 
   useEffect(() => {
@@ -157,6 +158,9 @@ export default function PaperWorkspace() {
           <TabBtn active={tab === 'outline'} onClick={() => setTab('outline')}>
             집필 · 논문 구성
           </TabBtn>
+          <TabBtn active={tab === 'assist'} onClick={() => setTab('assist')}>
+            AI 편집
+          </TabBtn>
           <TabBtn active={tab === 'refs'} onClick={() => setTab('refs')}>
             참고문헌
           </TabBtn>
@@ -171,6 +175,8 @@ export default function PaperWorkspace() {
         <div className="mt-8">
           {tab === 'team' ? (
             <TeamBuilder initial={paper.members} onSave={handleSaveTeam} />
+          ) : tab === 'assist' ? (
+            <AssistPanel paper={paper} userId={user?.id} sections={sections} />
           ) : tab === 'refs' ? (
             <ReferencesPanel paper={paper} userId={user?.id} />
           ) : tab === 'integrity' ? (
