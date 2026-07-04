@@ -9,7 +9,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const ANON = Deno.env.get('SUPABASE_ANON_KEY')!
 const SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-const ADMIN_EMAILS = (Deno.env.get('ADMIN_EMAILS') ?? 'aebon@kyonggi.ac.kr')
+const ADMIN_EMAILS = (Deno.env.get('ADMIN_EMAILS') ?? 'aebon@kyonggi.ac.kr,aebon@kakao.com')
   .split(',')
   .map((s) => s.trim().toLowerCase())
   .filter(Boolean)
