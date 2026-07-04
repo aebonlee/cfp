@@ -10,11 +10,15 @@
 //   supabase secrets set OPENAI_MODEL=gpt-4o          # 기본 gpt-4o
 //   supabase secrets set ANTHROPIC_MODEL=claude-opus-4-8
 
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') ?? ''
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 const OPENAI_MODEL = Deno.env.get('OPENAI_MODEL') ?? 'gpt-4o'
 const ANTHROPIC_MODEL = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-opus-4-8'
 const DEFAULT_PROVIDER = (Deno.env.get('AI_PROVIDER') ?? '').toLowerCase()
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
+const SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -37,6 +41,7 @@ interface Body {
   draft?: string
   instruction?: string // ai_assist: 사용자 자유 지시
   provider?: Provider // 요청별 프로바이더 지정(선택)
+  paperId?: string // 사용량 로깅용(선택)
 }
 
 function pickProvider(body: Body): Provider {
@@ -103,7 +108,15 @@ async function callOpenAI(system: string, user: string) {
   if (!res.ok) return { error: 'OpenAI API 오류', status: res.status, detail: await res.text() }
   const data = await res.json()
   const text = (data.choices?.[0]?.message?.content ?? '').trim()
-  return { text, usage: data.usage, model: OPENAI_MODEL, provider: 'openai' as const }
+  const u = data.usage ?? {}
+  return {
+    text,
+    usage: u,
+    model: OPENAI_MODEL,
+    provider: 'openai' as const,
+    inputTokens: u.prompt_tokens ?? 0,
+    outputTokens: u.completion_tokens ?? 0,
+  }
 }
 
 async function callClaude(system: string, user: string) {
@@ -129,7 +142,37 @@ async function callClaude(system: string, user: string) {
     .map((b: { text: string }) => b.text)
     .join('\n')
     .trim()
-  return { text, usage: data.usage, model: ANTHROPIC_MODEL, provider: 'claude' as const }
+  const u = data.usage ?? {}
+  return {
+    text,
+    usage: u,
+    model: ANTHROPIC_MODEL,
+    provider: 'claude' as const,
+    inputTokens: u.input_tokens ?? 0,
+    outputTokens: u.output_tokens ?? 0,
+  }
+}
+
+async function logRun(
+  paperId: string | undefined,
+  role: string,
+  out: { model: string; provider: string; inputTokens: number; outputTokens: number },
+) {
+  if (!SUPABASE_URL || !SERVICE) return
+  try {
+    const db = createClient(SUPABASE_URL, SERVICE)
+    await db.from('wp_ai_runs').insert({
+      paper_id: paperId ?? null,
+      role,
+      model: out.model,
+      provider: out.provider,
+      input_tokens: out.inputTokens,
+      output_tokens: out.outputTokens,
+      tokens: out.inputTokens + out.outputTokens,
+    })
+  } catch {
+    /* 로깅 실패는 무시 */
+  }
 }
 
 Deno.serve(async (req) => {
@@ -149,6 +192,7 @@ Deno.serve(async (req) => {
 
     const out = provider === 'openai' ? await callOpenAI(system, user) : await callClaude(system, user)
     if ('error' in out) return json(out, 502)
+    await logRun(body.paperId, body.role, out)
     return json(out)
   } catch (e) {
     return json({ error: String(e) }, 500)

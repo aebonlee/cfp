@@ -34,6 +34,7 @@ export async function requestAi(req: AiRequest): Promise<AiResponse> {
     method: paper.method,
     draft: req.draft,
     instruction: req.instruction,
+    paperId: paper.id,
   }
 
   const { data, error } = await supabase.functions.invoke('withpaper-ai', { body: payload })
