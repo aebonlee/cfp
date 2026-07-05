@@ -60,13 +60,13 @@ export async function checkIntegrity(paper: Paper, manuscript: string): Promise<
   return requestAi({ role: 'ai_integrity', section: '원고 전체', paper, draft: manuscript })
 }
 
-/** 주제 기반 참고문헌 추천 → 서지정보 문자열 배열 */
+/** 주제 기반 참고문헌 추천 → 서지정보 문자열 배열 (연도 포함 줄만) */
 export async function recommendReferences(paper: Paper): Promise<string[]> {
   const res = await requestAi({ role: 'ai_refs', section: '참고문헌', paper })
   return res.text
     .split('\n')
-    .map((l) => l.replace(/^\s*[-*\d.]+\s*/, '').trim())
-    .filter((l) => l.length > 10)
+    .map((l) => l.replace(/^\s*[-*•]?\s*\d{0,2}[.)]?\s*/, '').trim()) // 앞 번호·불릿 제거
+    .filter((l) => l.length > 15 && /(19|20)\d{2}/.test(l)) // 연도 있는 서지 줄만
 }
 
 /** 자유 지시로 텍스트 수정·편집 도움 */
