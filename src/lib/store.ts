@@ -141,8 +141,8 @@ function saveRefs(r: Record<string, Reference[]>) {
 export function getReferences(paperId: string): Reference[] {
   return loadRefs()[paperId] ?? []
 }
-export function addReference(paperId: string, apa: string): Reference {
-  const ref: Reference = { id: `ref-${Date.now()}-${Math.floor(Math.random() * 1e4)}`, apa }
+export function addReference(paperId: string, apa: string, recommended = false): Reference {
+  const ref: Reference = { id: `ref-${Date.now()}-${Math.floor(Math.random() * 1e4)}`, apa, recommended }
   const all = loadRefs()
   all[paperId] = [...(all[paperId] ?? []), ref]
   saveRefs(all)
@@ -151,6 +151,11 @@ export function addReference(paperId: string, apa: string): Reference {
 export function updateReference(paperId: string, id: string, apa: string) {
   const all = loadRefs()
   all[paperId] = (all[paperId] ?? []).map((r) => (r.id === id ? { ...r, apa } : r))
+  saveRefs(all)
+}
+export function setReferenceRecommendedLocal(paperId: string, id: string, recommended: boolean) {
+  const all = loadRefs()
+  all[paperId] = (all[paperId] ?? []).map((r) => (r.id === id ? { ...r, recommended } : r))
   saveRefs(all)
 }
 export function deleteReference(paperId: string, id: string) {

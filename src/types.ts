@@ -48,6 +48,7 @@ export interface Reference {
   id: string
   apa: string // 서지 정보(APA/KCI 형식 텍스트)
   citationKey?: string
+  recommended?: boolean // AI 추천 문헌
 }
 
 /** 팀원 참여 신청 */

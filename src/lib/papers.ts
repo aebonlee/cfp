@@ -96,14 +96,24 @@ export async function loadReferences(paperId: string, userId?: string): Promise<
   return local.getReferences(paperId)
 }
 
-export async function addReference(paperId: string, apa: string, userId?: string): Promise<Reference | undefined> {
-  if (userId) return db.addReference(paperId, apa)
-  return local.addReference(paperId, apa)
+export async function addReference(
+  paperId: string,
+  apa: string,
+  userId?: string,
+  recommended = false,
+): Promise<Reference | undefined> {
+  if (userId) return db.addReference(paperId, apa, recommended)
+  return local.addReference(paperId, apa, recommended)
 }
 
 export async function updateReference(paperId: string, id: string, apa: string, userId?: string): Promise<void> {
   if (userId) return db.updateReference(id, apa)
   local.updateReference(paperId, id, apa)
+}
+
+export async function confirmReference(paperId: string, id: string, userId?: string): Promise<void> {
+  if (userId) return db.setReferenceRecommended(id, false)
+  local.setReferenceRecommendedLocal(paperId, id, false)
 }
 
 export async function deleteReference(paperId: string, id: string, userId?: string): Promise<void> {

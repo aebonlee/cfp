@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
 import type { Paper } from '../types'
 
-export type AiRole = 'ai_writer' | 'ai_reviewer' | 'ai_editor' | 'ai_integrity' | 'ai_assist'
+export type AiRole = 'ai_writer' | 'ai_reviewer' | 'ai_editor' | 'ai_integrity' | 'ai_assist' | 'ai_refs'
 
 export interface AiRequest {
   role: AiRole
@@ -58,6 +58,15 @@ export async function formatReferences(paper: Paper, raw: string): Promise<AiRes
 /** 원고 전체를 연구윤리·유사도 관점에서 AI 사전 점검 */
 export async function checkIntegrity(paper: Paper, manuscript: string): Promise<AiResponse> {
   return requestAi({ role: 'ai_integrity', section: '원고 전체', paper, draft: manuscript })
+}
+
+/** 주제 기반 참고문헌 추천 → 서지정보 문자열 배열 */
+export async function recommendReferences(paper: Paper): Promise<string[]> {
+  const res = await requestAi({ role: 'ai_refs', section: '참고문헌', paper })
+  return res.text
+    .split('\n')
+    .map((l) => l.replace(/^\s*[-*\d.]+\s*/, '').trim())
+    .filter((l) => l.length > 10)
 }
 
 /** 자유 지시로 텍스트 수정·편집 도움 */

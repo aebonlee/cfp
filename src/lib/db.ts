@@ -335,30 +335,35 @@ export async function saveSection(
 }
 
 // ---- 참고문헌 ----
+type RefRow = { id: string; apa: string; citation_key: string | null; meta: { recommended?: boolean } | null }
+function toRef(r: RefRow): Reference {
+  return { id: r.id, apa: r.apa, citationKey: r.citation_key ?? undefined, recommended: !!r.meta?.recommended }
+}
+
 export async function listReferences(paperId: string): Promise<Reference[]> {
   const { data } = await supabase
     .from(TABLES.references)
-    .select('id, apa, citation_key')
+    .select('id, apa, citation_key, meta')
     .eq('paper_id', paperId)
     .order('created_at', { ascending: true })
-  return ((data ?? []) as { id: string; apa: string; citation_key: string | null }[]).map((r) => ({
-    id: r.id,
-    apa: r.apa,
-    citationKey: r.citation_key ?? undefined,
-  }))
+  return ((data ?? []) as RefRow[]).map(toRef)
 }
 
-export async function addReference(paperId: string, apa: string): Promise<Reference | undefined> {
+export async function addReference(paperId: string, apa: string, recommended = false): Promise<Reference | undefined> {
   const { data } = await supabase
     .from(TABLES.references)
-    .insert({ paper_id: paperId, apa })
-    .select('id, apa, citation_key')
+    .insert({ paper_id: paperId, apa, meta: recommended ? { recommended: true } : {} })
+    .select('id, apa, citation_key, meta')
     .single()
-  return data ? { id: data.id, apa: data.apa, citationKey: data.citation_key ?? undefined } : undefined
+  return data ? toRef(data as RefRow) : undefined
 }
 
 export async function updateReference(id: string, apa: string): Promise<void> {
   await supabase.from(TABLES.references).update({ apa }).eq('id', id)
+}
+
+export async function setReferenceRecommended(id: string, recommended: boolean): Promise<void> {
+  await supabase.from(TABLES.references).update({ meta: recommended ? { recommended: true } : {} }).eq('id', id)
 }
 
 export async function deleteReference(id: string): Promise<void> {

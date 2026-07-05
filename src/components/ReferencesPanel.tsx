@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Paper, Reference } from '../types'
-import { loadReferences, addReference, updateReference, deleteReference } from '../lib/papers'
-import { formatReferences } from '../lib/ai'
+import { loadReferences, addReference, updateReference, deleteReference, confirmReference } from '../lib/papers'
+import { formatReferences, recommendReferences } from '../lib/ai'
 
 export default function ReferencesPanel({ paper, userId }: { paper: Paper; userId?: string }) {
   const [refs, setRefs] = useState<Reference[]>([])
@@ -10,6 +10,8 @@ export default function ReferencesPanel({ paper, userId }: { paper: Paper; userI
   const [aiOpen, setAiOpen] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiText, setAiText] = useState('')
+  const [recLoading, setRecLoading] = useState(false)
+  const [recNote, setRecNote] = useState('')
 
   const style = paper.format === 'imrad' ? 'APA 7th (영문)' : 'APA · KCI (국문)'
 
@@ -47,6 +49,29 @@ export default function ReferencesPanel({ paper, userId }: { paper: Paper; userI
     await deleteReference(paper.id, id, userId)
   }
 
+  // AI 추천 문헌 검색 → 추천으로 등록
+  async function recommend() {
+    setRecLoading(true)
+    setRecNote('')
+    const items = await recommendReferences(paper)
+    if (items.length === 0) {
+      setRecNote('추천 결과가 없습니다. (AI 연동 상태를 확인하세요)')
+      setRecLoading(false)
+      return
+    }
+    // 이미 있는 문헌과 중복 제외
+    const existing = new Set(refs.map((r) => r.apa.trim()))
+    const fresh = items.filter((t) => !existing.has(t.trim()))
+    const added: Reference[] = []
+    for (const t of fresh) {
+      const r = await addReference(paper.id, t, userId, true)
+      if (r) added.push(r)
+    }
+    setRefs((cur) => [...cur, ...added])
+    setRecNote(`AI 추천 ${added.length}건 등록됨 · 검증 후 확정하세요`)
+    setRecLoading(false)
+  }
+
   async function aiOrganize() {
     setAiOpen(true)
     setAiLoading(true)
@@ -64,14 +89,24 @@ export default function ReferencesPanel({ paper, userId }: { paper: Paper; userI
           <h3 className="font-serif text-xl font-bold">참고문헌</h3>
           <p className="text-sm text-ink-500">형식: {style} · {refs.length}건</p>
         </div>
-        <button
-          onClick={aiOrganize}
-          disabled={aiLoading || (refs.length === 0 && !input.trim())}
-          className="rounded-full border border-ink-300 px-4 py-1.5 text-xs font-medium text-ink-700 transition hover:border-gold-500 hover:text-gold-600 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {aiLoading ? '정리 중…' : 'AI로 참고문헌 정리'}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={recommend}
+            disabled={recLoading}
+            className="rounded-full bg-gold-500 px-4 py-1.5 text-xs font-semibold text-ink-900 transition hover:bg-gold-400 disabled:opacity-40"
+          >
+            {recLoading ? '문헌 찾는 중…' : '📚 AI 추천 문헌'}
+          </button>
+          <button
+            onClick={aiOrganize}
+            disabled={aiLoading || (refs.length === 0 && !input.trim())}
+            className="rounded-full border border-ink-300 px-4 py-1.5 text-xs font-medium text-ink-700 transition hover:border-gold-500 hover:text-gold-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {aiLoading ? '정리 중…' : 'AI로 참고문헌 정리'}
+          </button>
+        </div>
       </div>
+      {recNote && <p className="-mt-2 mb-4 text-xs text-gold-600">{recNote}</p>}
 
       {/* 입력 */}
       <div className="mb-5 rounded-xl border border-ink-200 bg-white p-4">
@@ -103,16 +138,39 @@ export default function ReferencesPanel({ paper, userId }: { paper: Paper; userI
       ) : (
         <ol className="space-y-2">
           {refs.map((r, i) => (
-            <li key={r.id} className="flex items-start gap-3 rounded-xl border border-ink-200 bg-white p-3">
+            <li
+              key={r.id}
+              className={`flex items-start gap-3 rounded-xl border p-3 ${
+                r.recommended ? 'border-gold-300 bg-gold-500/5' : 'border-ink-200 bg-white'
+              }`}
+            >
               <span className="mt-2 w-6 shrink-0 text-right text-xs text-ink-400">{i + 1}.</span>
-              <textarea
-                value={r.apa}
-                onChange={(e) => setRefs((cur) => cur.map((x) => (x.id === r.id ? { ...x, apa: e.target.value } : x)))}
-                onBlur={(e) => edit(r.id, e.target.value)}
-                rows={2}
-                className="flex-1 resize-none rounded-lg border border-transparent bg-transparent p-1 text-sm leading-relaxed outline-none hover:border-ink-200 focus:border-gold-500"
-              />
-              <button onClick={() => remove(r.id)} className="mt-1 text-xs text-ink-400 hover:text-red-500">
+              <div className="min-w-0 flex-1">
+                {r.recommended && (
+                  <span className="mb-1 flex items-center gap-2">
+                    <span className="rounded bg-gold-500/20 px-2 py-0.5 text-[11px] font-semibold text-gold-600">
+                      AI 추천 · 검증 필요
+                    </span>
+                    <button
+                      onClick={async () => {
+                        setRefs((cur) => cur.map((x) => (x.id === r.id ? { ...x, recommended: false } : x)))
+                        await confirmReference(paper.id, r.id, userId)
+                      }}
+                      className="text-[11px] text-green-600 hover:underline"
+                    >
+                      확정
+                    </button>
+                  </span>
+                )}
+                <textarea
+                  value={r.apa}
+                  onChange={(e) => setRefs((cur) => cur.map((x) => (x.id === r.id ? { ...x, apa: e.target.value } : x)))}
+                  onBlur={(e) => edit(r.id, e.target.value)}
+                  rows={2}
+                  className="w-full resize-none rounded-lg border border-transparent bg-transparent p-1 text-sm leading-relaxed outline-none hover:border-ink-200 focus:border-gold-500"
+                />
+              </div>
+              <button onClick={() => remove(r.id)} className="mt-1 shrink-0 text-xs text-ink-400 hover:text-red-500">
                 삭제
               </button>
             </li>

@@ -26,7 +26,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-type Role = 'ai_writer' | 'ai_reviewer' | 'ai_editor' | 'ai_integrity' | 'ai_assist'
+type Role = 'ai_writer' | 'ai_reviewer' | 'ai_editor' | 'ai_integrity' | 'ai_assist' | 'ai_refs'
 type Provider = 'openai' | 'claude'
 
 interface Body {
@@ -78,6 +78,10 @@ function userPrompt(b: Body) {
   }
   if (b.role === 'ai_reviewer') {
     return `${meta}\n\n아래는 「${b.section}」 섹션의 현재 초안입니다. 학술지 심사 기준으로 (1) 논리·근거, (2) 형식·인용, (3) 문장·표현 관점에서 구체적인 개선점을 항목별로 제시하고, 우선순위를 매겨 주세요.\n\n[초안]\n${b.draft ?? '(초안 없음)'}`
+  }
+  if (b.role === 'ai_refs') {
+    const style = b.format === 'imrad' ? 'APA 7th (English)' : 'APA·KCI (국문 우선, 필요시 영문 병기)'
+    return `${meta}\n\n위 논문 주제·키워드와 밀접한 학술 참고문헌을 8~12개 추천해 주세요.\n규칙:\n- 실재하는(검증 가능한) 문헌만. 존재가 불확실하면 포함하지 마세요(지어내기 금지).\n- 형식: ${style}. 「저자(연도). 제목. 학술지/출판사, 권(호), 쪽.」\n- 한 줄에 하나씩, 번호·설명 없이 서지정보만.\n- 주제의 핵심 이론·방법론(예: AHP는 Saaty, 역량은 McClelland/Spencer 등) 고전과 최근 연구를 균형있게.`
   }
   if (b.role === 'ai_assist') {
     const instr = (b.instruction ?? '').trim() || '학술적 정확성을 유지하며 더 명료하게 다듬어 주세요.'
