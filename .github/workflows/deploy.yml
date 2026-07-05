@@ -12,7 +12,9 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # 진행 중 배포를 취소하지 않고 큐잉 — 취소 시 Pages 환경이 errored 로 깨져
+  # 이후 배포가 "Deployment failed, try again later" 로 실패하던 문제 해결
+  cancel-in-progress: false
 
 jobs:
   build:
