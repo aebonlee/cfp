@@ -162,8 +162,9 @@ const RAW_SEEDS: Paper[] = [
   },
 ]
 
-// 모든 제공 주제에 이애본 제1저자를 기본 팀원으로 주입
+// 모든 제공 주제: 이애본 제1저자 + 팀원 공개 모집
 export const SEED_TOPICS: Paper[] = RAW_SEEDS.map((p) => ({
   ...p,
   members: [{ id: `${p.id}-lead`, ...LEAD_AUTHOR }],
+  recruiting: true,
 }))

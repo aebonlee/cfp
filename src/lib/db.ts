@@ -90,6 +90,7 @@ export async function syncSeeds(ownerId: string): Promise<void> {
         status: 'topic',
         seed: true,
         source_file: s.sourceFile ?? null,
+        recruiting: true,
       })),
     )
   }
