@@ -15,6 +15,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') ?? ''
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 const OPENAI_MODEL = Deno.env.get('OPENAI_MODEL') ?? 'gpt-4o'
+const OPENAI_SEARCH_MODEL = Deno.env.get('OPENAI_SEARCH_MODEL') ?? 'gpt-4o-search-preview'
 const ANTHROPIC_MODEL = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-opus-4-8'
 const DEFAULT_PROVIDER = (Deno.env.get('AI_PROVIDER') ?? '').toLowerCase()
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
@@ -81,7 +82,7 @@ function userPrompt(b: Body) {
   }
   if (b.role === 'ai_refs') {
     const style = b.format === 'imrad' ? 'APA 7th (English)' : 'APA·KCI (국문 우선, 필요시 영문 병기)'
-    return `${meta}\n\n위 논문 주제·키워드와 밀접한 학술 참고문헌을 웹에서 검색하여 8~12개 추천해 주세요.\n규칙:\n- 반드시 web_search 로 Google Scholar·학술 DB·출판사 페이지 등을 검색해 실재를 확인한 문헌만 포함하세요. 검색으로 확인되지 않으면 넣지 마세요(지어내기 절대 금지).\n- 형식: ${style}. 「저자(연도). 제목. 학술지/출판사, 권(호), 쪽.」 가능하면 DOI/URL 병기.\n- 한 줄에 하나씩, 번호·설명 없이 서지정보만.\n- 주제의 핵심 이론·방법론 고전과 최근(5년 내) 연구를 균형있게.`
+    return `${meta}\n\n위 논문 주제·키워드와 밀접한 학술 참고문헌을 웹을 검색해 8~12개 추천해 주세요.\n규칙:\n- 반드시 웹 검색으로 Google Scholar·학술 DB·출판사 페이지 등에서 실재를 확인한 문헌만 포함하세요. 검색으로 확인되지 않으면 넣지 마세요(지어내기 절대 금지).\n- 형식: ${style}. 「저자(연도). 제목. 학술지/출판사, 권(호), 쪽.」 가능하면 DOI/URL 병기.\n- 한 줄에 하나씩, 번호·설명 없이 서지정보만. 부연설명·머리말 없이 목록만.\n- 주제의 핵심 이론·방법론 고전과 최근(5년 내) 연구를 균형있게.`
   }
   if (b.role === 'ai_assist') {
     const instr = (b.instruction ?? '').trim() || '학술적 정확성을 유지하며 더 명료하게 다듬어 주세요.'
@@ -154,6 +155,35 @@ async function callClaude(system: string, user: string) {
     provider: 'claude' as const,
     inputTokens: u.input_tokens ?? 0,
     outputTokens: u.output_tokens ?? 0,
+  }
+}
+
+// OpenAI 웹검색 모델(gpt-4o-search-preview)로 실재 문헌 검색 추천
+async function callOpenAISearch(system: string, user: string) {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model: OPENAI_SEARCH_MODEL,
+      max_tokens: 4000,
+      web_search_options: {},
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+    }),
+  })
+  if (!res.ok) return { error: 'OpenAI 검색 오류', status: res.status, detail: await res.text() }
+  const data = await res.json()
+  const text = (data.choices?.[0]?.message?.content ?? '').trim()
+  const u = data.usage ?? {}
+  return {
+    text,
+    usage: u,
+    model: OPENAI_SEARCH_MODEL,
+    provider: 'openai-search' as const,
+    inputTokens: u.prompt_tokens ?? 0,
+    outputTokens: u.completion_tokens ?? 0,
   }
 }
 
@@ -243,10 +273,12 @@ Deno.serve(async (req) => {
     const user = userPrompt(body)
     const provider = pickProvider(body)
 
-    // 참고문헌 추천은 웹 검색(Claude) 우선, 키 없으면 일반 프로바이더로 폴백
+    // 참고문헌 추천은 웹 검색 우선(Claude > OpenAI 검색), 둘 다 없으면 지식기반 폴백
     let out
     if (body.role === 'ai_refs' && ANTHROPIC_API_KEY) {
       out = await callClaudeSearch(system, user)
+    } else if (body.role === 'ai_refs' && OPENAI_API_KEY) {
+      out = await callOpenAISearch(system, user)
     } else {
       out = provider === 'openai' ? await callOpenAI(system, user) : await callClaude(system, user)
     }
