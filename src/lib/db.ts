@@ -1,5 +1,5 @@
 import { supabase, TABLES } from './supabase'
-import type { Paper, TeamMember, MemberRole, MemberType, PaperStatus, Reference, Comment } from '../types'
+import type { Paper, TeamMember, MemberRole, MemberType, PaperStatus, Reference, Comment, Application } from '../types'
 import { SEED_TOPICS } from '../data/topics'
 
 // Supabase(wp_) 영구 저장 레이어. 로그인 사용자 기준으로 동작한다.
@@ -190,12 +190,84 @@ export async function listRecruiting(): Promise<Paper[]> {
   return ((data ?? []) as PaperRow[]).map((r) => toPaper(r, []))
 }
 
-/** 공개 논문에 본인을 공동저자로 셀프 조인 */
-export async function joinPaper(paperId: string, userId: string, name: string): Promise<{ error?: string }> {
-  const { error } = await supabase
-    .from(TABLES.members)
-    .insert({ paper_id: paperId, user_id: userId, type: 'human', role: 'coauthor', name })
+// ---- 참여 신청 ----
+interface AppRow {
+  id: string
+  paper_id: string
+  applicant_id: string | null
+  applicant_name: string | null
+  applicant_email: string | null
+  message: string | null
+  status: 'pending' | 'accepted' | 'rejected'
+  created_at: string
+}
+function toApp(r: AppRow): Application {
+  return {
+    id: r.id,
+    paperId: r.paper_id,
+    applicantId: r.applicant_id ?? undefined,
+    applicantName: r.applicant_name ?? '(이름 없음)',
+    applicantEmail: r.applicant_email ?? undefined,
+    message: r.message ?? undefined,
+    status: r.status,
+    createdAt: r.created_at,
+  }
+}
+
+/** 공개 논문에 참여 신청 */
+export async function applyToPaper(
+  paperId: string,
+  applicant: { id: string; name: string; email?: string },
+  message: string,
+): Promise<{ error?: string }> {
+  const { error } = await supabase.from(TABLES.applications).insert({
+    paper_id: paperId,
+    applicant_id: applicant.id,
+    applicant_name: applicant.name,
+    applicant_email: applicant.email ?? null,
+    message: message || null,
+  })
   return error ? { error: error.message } : {}
+}
+
+/** 내가 이미 신청한 공개 논문 id 목록 */
+export async function myApplications(userId: string): Promise<Record<string, string>> {
+  const { data } = await supabase
+    .from(TABLES.applications)
+    .select('paper_id, status')
+    .eq('applicant_id', userId)
+  const m: Record<string, string> = {}
+  for (const r of (data ?? []) as { paper_id: string; status: string }[]) m[r.paper_id] = r.status
+  return m
+}
+
+/** 특정 논문의 신청 목록(주저자용) */
+export async function listApplications(paperId: string): Promise<Application[]> {
+  const { data } = await supabase
+    .from(TABLES.applications)
+    .select('*')
+    .eq('paper_id', paperId)
+    .order('created_at', { ascending: false })
+  return ((data ?? []) as AppRow[]).map(toApp)
+}
+
+/** 신청 수락 → 공동저자 추가 + 상태 변경 */
+export async function acceptApplication(app: Application): Promise<{ error?: string }> {
+  const { error: mErr } = await supabase.from(TABLES.members).insert({
+    paper_id: app.paperId,
+    user_id: app.applicantId ?? null,
+    type: 'human',
+    role: 'coauthor',
+    name: app.applicantName,
+    invite_email: app.applicantEmail ?? null,
+  })
+  if (mErr) return { error: mErr.message }
+  await supabase.from(TABLES.applications).update({ status: 'accepted' }).eq('id', app.id)
+  return {}
+}
+
+export async function rejectApplication(id: string): Promise<void> {
+  await supabase.from(TABLES.applications).update({ status: 'rejected' }).eq('id', id)
 }
 
 /** 팀원 전체 교체 + 상태 갱신 */

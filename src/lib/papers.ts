@@ -1,5 +1,5 @@
 // 논문 데이터 파사드: 로그인(userId 있음) → Supabase(wp_), 비로그인 → localStorage
-import type { Paper, TeamMember, Reference, Comment } from '../types'
+import type { Paper, TeamMember, Reference, Comment, Application } from '../types'
 import { findPreset } from '../data/presets'
 import { resolveSections } from '../data/sections'
 import { getPresetId } from './store'
@@ -54,11 +54,24 @@ export async function loadRecruiting(): Promise<Paper[]> {
   return db.listRecruiting()
 }
 
-export async function joinRecruiting(
+export async function applyToRecruiting(
   paperId: string,
-  user: { id: string; name: string },
+  applicant: { id: string; name: string; email?: string },
+  message: string,
 ): Promise<{ error?: string }> {
-  return db.joinPaper(paperId, user.id, user.name)
+  return db.applyToPaper(paperId, applicant, message)
+}
+export async function loadMyApplications(userId: string): Promise<Record<string, string>> {
+  return db.myApplications(userId)
+}
+export async function loadApplications(paperId: string): Promise<Application[]> {
+  return db.listApplications(paperId)
+}
+export async function acceptApplication(app: Application): Promise<{ error?: string }> {
+  return db.acceptApplication(app)
+}
+export async function rejectApplication(id: string): Promise<void> {
+  return db.rejectApplication(id)
 }
 
 export async function loadSections(paperId: string, userId?: string): Promise<Record<string, string>> {

@@ -1,19 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
 import LoginModal from '../components/LoginModal'
 import { useAuth } from '../lib/auth'
-import { loadRecruiting, joinRecruiting } from '../lib/papers'
+import { loadRecruiting, applyToRecruiting, loadMyApplications } from '../lib/papers'
 import { FORMAT_LABEL, type Paper } from '../types'
 
 export default function RecruitBoard() {
   const { user } = useAuth()
-  const nav = useNavigate()
   const [papers, setPapers] = useState<Paper[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('전체')
   const [loginOpen, setLoginOpen] = useState(false)
-  const [joining, setJoining] = useState<string | null>(null)
+  const [applying, setApplying] = useState<string | null>(null)
+  const [applied, setApplied] = useState<Record<string, string>>({})
+  const [msgFor, setMsgFor] = useState<string | null>(null)
+  const [message, setMessage] = useState('')
 
   useEffect(() => {
     let alive = true
@@ -25,21 +26,32 @@ export default function RecruitBoard() {
     }
   }, [])
 
+  useEffect(() => {
+    if (user) loadMyApplications(user.id).then(setApplied)
+    else setApplied({})
+  }, [user])
+
   const clusters = useMemo(() => ['전체', ...Array.from(new Set(papers.map((p) => p.cluster)))], [papers])
   const shown = filter === '전체' ? papers : papers.filter((p) => p.cluster === filter)
 
   const authorName = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '참여자'
 
-  async function join(p: Paper) {
+  function start(p: Paper) {
     if (!user) {
       setLoginOpen(true)
       return
     }
-    setJoining(p.id)
-    const { error } = await joinRecruiting(p.id, { id: user.id, name: authorName })
-    setJoining(null)
-    if (error) alert('참여 신청 실패: ' + error)
-    else nav(`/paper/${p.id}`)
+    setMsgFor(p.id)
+    setMessage('')
+  }
+  async function submit(p: Paper) {
+    if (!user) return
+    setApplying(p.id)
+    const { error } = await applyToRecruiting(p.id, { id: user.id, name: authorName, email: user.email }, message)
+    setApplying(null)
+    setMsgFor(null)
+    if (error) alert('신청 실패: ' + error)
+    else setApplied((a) => ({ ...a, [p.id]: 'pending' }))
   }
 
   return (
@@ -53,8 +65,8 @@ export default function RecruitBoard() {
           </span>
           <h1 className="mt-4 font-serif text-3xl font-bold">함께 쓸 논문을 찾아보세요</h1>
           <p className="mt-2 text-ink-600">
-            공개 모집 중인 연구 주제입니다. 관심 있는 주제에 참여 신청하면 공동저자로 합류합니다.
-            {!user && ' (참여하려면 로그인이 필요합니다)'}
+            공개 모집 중인 연구 주제입니다. 관심 있는 주제에 참여 신청하면 <b>주저자 승인 후</b> 공동저자로 합류합니다.
+            {!user && ' (신청하려면 로그인이 필요합니다)'}
           </p>
         </div>
 
@@ -98,13 +110,40 @@ export default function RecruitBoard() {
                     <span key={k} className="rounded bg-ink-50 px-2 py-0.5 text-xs text-ink-400">#{k}</span>
                   ))}
                 </div>
-                <button
-                  onClick={() => join(p)}
-                  disabled={joining === p.id}
-                  className="mt-5 rounded-full bg-ink-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-ink-700 disabled:opacity-40"
-                >
-                  {joining === p.id ? '참여 중…' : user ? '참여 신청' : '로그인하고 참여'}
-                </button>
+                {applied[p.id] ? (
+                  <div className="mt-5 rounded-full bg-green-50 px-5 py-2.5 text-center text-sm font-medium text-green-700">
+                    {applied[p.id] === 'accepted' ? '참여 승인됨 ✓' : applied[p.id] === 'rejected' ? '신청 반려됨' : '신청 완료 · 주저자 승인 대기'}
+                  </div>
+                ) : msgFor === p.id ? (
+                  <div className="mt-5 space-y-2">
+                    <textarea
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      rows={2}
+                      placeholder="주저자에게 남길 한마디 (전공·관심·역할 등, 선택)"
+                      className="w-full resize-none rounded-lg border border-ink-200 p-2.5 text-sm outline-none focus:border-gold-500"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => submit(p)}
+                        disabled={applying === p.id}
+                        className="flex-1 rounded-full bg-ink-900 px-4 py-2 text-sm font-medium text-white hover:bg-ink-700 disabled:opacity-40"
+                      >
+                        {applying === p.id ? '신청 중…' : '신청 보내기'}
+                      </button>
+                      <button onClick={() => setMsgFor(null)} className="rounded-full border border-ink-300 px-4 py-2 text-sm text-ink-600">
+                        취소
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => start(p)}
+                    className="mt-5 rounded-full bg-ink-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-ink-700"
+                  >
+                    {user ? '참여 신청' : '로그인하고 신청'}
+                  </button>
+                )}
               </div>
             ))}
           </div>

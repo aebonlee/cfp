@@ -50,6 +50,18 @@ export interface Reference {
   citationKey?: string
 }
 
+/** 팀원 참여 신청 */
+export interface Application {
+  id: string
+  paperId: string
+  applicantId?: string
+  applicantName: string
+  applicantEmail?: string
+  message?: string
+  status: 'pending' | 'accepted' | 'rejected'
+  createdAt: string
+}
+
 /** 섹션·단락 코멘트(리뷰 스레드) */
 export interface Comment {
   id: string

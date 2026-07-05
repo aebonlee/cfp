@@ -7,6 +7,7 @@ import ReferencesPanel from '../components/ReferencesPanel'
 import SubmissionPanel from '../components/SubmissionPanel'
 import IntegrityPanel from '../components/IntegrityPanel'
 import AssistPanel from '../components/AssistPanel'
+import ApplicationsPanel from '../components/ApplicationsPanel'
 import { loadPaper, saveTeam, setRecruiting } from '../lib/papers'
 import { getPresetId, setPresetId } from '../lib/store'
 import { PRESETS, findPreset } from '../data/presets'
@@ -191,7 +192,12 @@ export default function PaperWorkspace() {
 
         <div className="mt-8">
           {tab === 'team' ? (
-            <TeamBuilder initial={paper.members} onSave={handleSaveTeam} />
+            <>
+              {!paper.shared && user?.id && (
+                <ApplicationsPanel paper={paper} onChange={async () => setPaper(await loadPaper(paper.id, user?.id))} />
+              )}
+              <TeamBuilder initial={paper.members} onSave={handleSaveTeam} />
+            </>
           ) : tab === 'assist' ? (
             <AssistPanel paper={paper} userId={user?.id} sections={sections} />
           ) : tab === 'refs' ? (

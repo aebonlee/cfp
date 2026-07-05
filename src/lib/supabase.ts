@@ -27,6 +27,7 @@ export const TABLES = {
   comments: `${DB_PREFIX}comments`,
   references: `${DB_PREFIX}references`,
   aiRuns: `${DB_PREFIX}ai_runs`,
+  applications: `${DB_PREFIX}applications`,
 } as const
 
 export const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://cfp.dreamitbiz.com'
