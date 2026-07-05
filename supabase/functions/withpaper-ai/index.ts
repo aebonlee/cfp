@@ -81,7 +81,7 @@ function userPrompt(b: Body) {
   }
   if (b.role === 'ai_refs') {
     const style = b.format === 'imrad' ? 'APA 7th (English)' : 'APA·KCI (국문 우선, 필요시 영문 병기)'
-    return `${meta}\n\n위 논문 주제·키워드와 밀접한 학술 참고문헌을 8~12개 추천해 주세요.\n규칙:\n- 실재하는(검증 가능한) 문헌만. 존재가 불확실하면 포함하지 마세요(지어내기 금지).\n- 형식: ${style}. 「저자(연도). 제목. 학술지/출판사, 권(호), 쪽.」\n- 한 줄에 하나씩, 번호·설명 없이 서지정보만.\n- 주제의 핵심 이론·방법론(예: AHP는 Saaty, 역량은 McClelland/Spencer 등) 고전과 최근 연구를 균형있게.`
+    return `${meta}\n\n위 논문 주제·키워드와 밀접한 학술 참고문헌을 웹에서 검색하여 8~12개 추천해 주세요.\n규칙:\n- 반드시 web_search 로 Google Scholar·학술 DB·출판사 페이지 등을 검색해 실재를 확인한 문헌만 포함하세요. 검색으로 확인되지 않으면 넣지 마세요(지어내기 절대 금지).\n- 형식: ${style}. 「저자(연도). 제목. 학술지/출판사, 권(호), 쪽.」 가능하면 DOI/URL 병기.\n- 한 줄에 하나씩, 번호·설명 없이 서지정보만.\n- 주제의 핵심 이론·방법론 고전과 최근(5년 내) 연구를 균형있게.`
   }
   if (b.role === 'ai_assist') {
     const instr = (b.instruction ?? '').trim() || '학술적 정확성을 유지하며 더 명료하게 다듬어 주세요.'
@@ -157,6 +157,55 @@ async function callClaude(system: string, user: string) {
   }
 }
 
+// Claude + web_search 로 실재 문헌 검색 추천
+async function callClaudeSearch(system: string, user: string) {
+  if (!ANTHROPIC_API_KEY) {
+    return { error: '웹 검색 추천에는 ANTHROPIC_API_KEY 가 필요합니다.', status: 400 }
+  }
+  const messages: { role: string; content: unknown }[] = [{ role: 'user', content: user }]
+  let lastText = ''
+  let usage: Record<string, number> = {}
+  for (let i = 0; i < 4; i++) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: ANTHROPIC_MODEL,
+        max_tokens: 4000,
+        system,
+        tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: 6 }],
+        messages,
+      }),
+    })
+    if (!res.ok) return { error: 'Claude 검색 오류', status: res.status, detail: await res.text() }
+    const data = await res.json()
+    const text = (data.content ?? [])
+      .filter((b: { type: string }) => b.type === 'text')
+      .map((b: { text: string }) => b.text)
+      .join('\n')
+      .trim()
+    if (text) lastText = text
+    usage = data.usage ?? usage
+    if (data.stop_reason === 'pause_turn') {
+      messages.push({ role: 'assistant', content: data.content })
+      continue
+    }
+    break
+  }
+  return {
+    text: lastText,
+    usage,
+    model: ANTHROPIC_MODEL,
+    provider: 'claude-search' as const,
+    inputTokens: usage.input_tokens ?? 0,
+    outputTokens: usage.output_tokens ?? 0,
+  }
+}
+
 async function logRun(
   paperId: string | undefined,
   role: string,
@@ -194,8 +243,14 @@ Deno.serve(async (req) => {
     const user = userPrompt(body)
     const provider = pickProvider(body)
 
-    const out = provider === 'openai' ? await callOpenAI(system, user) : await callClaude(system, user)
-    if ('error' in out) return json(out, 502)
+    // 참고문헌 추천은 웹 검색(Claude) 우선, 키 없으면 일반 프로바이더로 폴백
+    let out
+    if (body.role === 'ai_refs' && ANTHROPIC_API_KEY) {
+      out = await callClaudeSearch(system, user)
+    } else {
+      out = provider === 'openai' ? await callOpenAI(system, user) : await callClaude(system, user)
+    }
+    if ('error' in out) return json(out, out.status ?? 502)
     await logRun(body.paperId, body.role, out)
     return json(out)
   } catch (e) {
