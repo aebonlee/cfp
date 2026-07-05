@@ -108,9 +108,17 @@ Deno.serve(async (req) => {
       byOwner[p.owner_id] = (byOwner[p.owner_id] ?? 0) + 1
     }
 
-    // 사용자 목록(이메일 매핑)
+    // cfp(withpaper) 사용자 식별: 논문 소유 · 팀원 · 신청 이력이 있는 사람만
+    // (공유 Supabase 라 auth.users 엔 타 사이트 회원도 섞여 있음)
+    const cfpIds = new Set<string>(Object.keys(byOwner))
+    const { data: memRows } = await db.from('wp_paper_members').select('user_id')
+    for (const m of memRows ?? []) if (m.user_id) cfpIds.add(m.user_id)
+    const { data: appRows } = await db.from('wp_applications').select('applicant_id')
+    for (const a of appRows ?? []) if (a.applicant_id) cfpIds.add(a.applicant_id)
+
+    // 사용자 목록(이메일 매핑) — cfp 참여자만
     const { data: uData } = await db.auth.admin.listUsers({ perPage: 1000 })
-    const authUsers = uData?.users ?? []
+    const authUsers = (uData?.users ?? []).filter((u: any) => cfpIds.has(u.id))
     const users = authUsers.map((u: any) => ({
       id: u.id,
       email: u.email ?? '(이메일 없음)',
