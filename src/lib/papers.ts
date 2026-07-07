@@ -6,8 +6,8 @@ import { getPresetId } from './store'
 import * as db from './db'
 import * as local from './store'
 
-export async function loadPapers(userId?: string): Promise<Paper[]> {
-  const papers = userId ? await db.listPapers(userId) : local.getPapers()
+export async function loadPapers(userId?: string, email?: string): Promise<Paper[]> {
+  const papers = userId ? await db.listPapers(userId, email) : local.getPapers()
 
   // 진행률 계산: 채워진 섹션 / 예상 섹션 수
   let counts: Record<string, number> = {}
@@ -67,8 +67,11 @@ export async function loadMyApplications(userId: string): Promise<Record<string,
 export async function loadApplications(paperId: string): Promise<Application[]> {
   return db.listApplications(paperId)
 }
-export async function acceptApplication(app: Application): Promise<{ error?: string }> {
-  return db.acceptApplication(app)
+export async function acceptApplication(
+  app: Application,
+  role: 'coauthor' | 'corresponding' = 'coauthor',
+): Promise<{ error?: string }> {
+  return db.acceptApplication(app, role)
 }
 export async function rejectApplication(id: string): Promise<void> {
   return db.rejectApplication(id)

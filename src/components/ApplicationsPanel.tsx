@@ -23,10 +23,11 @@ export default function ApplicationsPanel({ paper, onChange }: { paper: Paper; o
   }, [paper.id])
 
   const pending = apps.filter((a) => a.status === 'pending')
+  const hasCorresponding = paper.members.some((m) => m.role === 'corresponding')
 
-  async function accept(a: Application) {
+  async function accept(a: Application, role: 'coauthor' | 'corresponding') {
     setBusy(a.id)
-    const { error } = await acceptApplication(a)
+    const { error } = await acceptApplication(a, role)
     setBusy(null)
     if (error) alert('수락 실패: ' + error)
     else {
@@ -68,13 +69,21 @@ export default function ApplicationsPanel({ paper, onChange }: { paper: Paper; o
                 </div>
                 {a.message && <p className="mt-1 break-words text-sm text-ink-600">{a.message}</p>}
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
-                  onClick={() => accept(a)}
+                  onClick={() => accept(a, 'coauthor')}
                   disabled={busy === a.id}
                   className="rounded-full bg-ink-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-ink-700 disabled:opacity-40"
                 >
-                  수락
+                  공동저자로 수락
+                </button>
+                <button
+                  onClick={() => accept(a, 'corresponding')}
+                  disabled={busy === a.id}
+                  title={hasCorresponding ? '기존 교신저자는 공동저자로 조정됩니다' : undefined}
+                  className="rounded-full border border-gold-500 bg-gold-500/10 px-4 py-1.5 text-sm font-medium text-gold-700 hover:bg-gold-500/20 disabled:opacity-40"
+                >
+                  교신저자로 수락
                 </button>
                 <button
                   onClick={() => reject(a)}

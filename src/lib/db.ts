@@ -1,6 +1,7 @@
 import { supabase, TABLES } from './supabase'
 import type { Paper, TeamMember, MemberRole, MemberType, PaperStatus, Reference, Comment, Application } from '../types'
 import { SEED_TOPICS } from '../data/topics'
+import { isAdmin } from './admin'
 
 // Supabase(wp_) 영구 저장 레이어. 로그인 사용자 기준으로 동작한다.
 
@@ -121,10 +122,12 @@ export async function syncSeeds(ownerId: string): Promise<void> {
   }
 }
 
-/** 사용자의 논문 목록(+팀원) 로드 — 소유 + 이메일로 초대받은 공유 논문 포함 */
-export async function listPapers(ownerId: string): Promise<Paper[]> {
+/** 사용자의 논문 목록(+팀원) 로드 — 소유 + 팀원으로 합류한 공유 논문만.
+ *  시드(제공 주제)는 관리자 1인 소유의 공용 주제이므로, 관리자만 임포트한다.
+ *  일반 사용자는 시드를 '내 논문'에 복사받지 않고, 모집 게시판에서 신청해 합류한다. */
+export async function listPapers(ownerId: string, email?: string): Promise<Paper[]> {
   await supabase.rpc('wp_claim_invites') // 내 이메일로 온 초대 연결(있으면)
-  await syncSeeds(ownerId)
+  if (isAdmin(email)) await syncSeeds(ownerId) // 시드는 관리자에게만 1회 생성
   const { data: papers } = await supabase
     .from(TABLES.papers)
     .select('*')
@@ -135,12 +138,16 @@ export async function listPapers(ownerId: string): Promise<Paper[]> {
   const ids = rows.map((r) => r.id)
   const { data: members } = await supabase.from(TABLES.members).select('*').in('paper_id', ids)
   const byPaper = new Map<string, TeamMember[]>()
+  const memberPaperIds = new Set<string>() // 내가 팀원으로 소속된 논문
   for (const m of (members ?? []) as MemberRow[]) {
     const list = byPaper.get(m.paper_id) ?? []
     list.push(toMember(m))
     byPaper.set(m.paper_id, list)
+    if (m.user_id === ownerId) memberPaperIds.add(m.paper_id)
   }
-  return rows.map((r) => toPaper(r, byPaper.get(r.id) ?? [], ownerId))
+  // RLS가 recruiting=true 공개 논문까지 반환하므로, '내 논문'은 소유 또는 합류한 것만 남긴다
+  const mine = rows.filter((r) => r.owner_id === ownerId || memberPaperIds.has(r.id))
+  return mine.map((r) => toPaper(r, byPaper.get(r.id) ?? [], ownerId))
 }
 
 export async function getPaper(id: string, viewerId?: string): Promise<Paper | undefined> {
@@ -252,13 +259,24 @@ export async function listApplications(paperId: string): Promise<Application[]> 
   return ((data ?? []) as AppRow[]).map(toApp)
 }
 
-/** 신청 수락 → 공동저자 추가 + 상태 변경 */
-export async function acceptApplication(app: Application): Promise<{ error?: string }> {
+/** 신청 수락 → 선택한 역할(공동저자/교신저자)로 팀원 추가 + 상태 변경.
+ *  교신저자는 논문당 1명이므로, 기존 교신저자가 있으면 공동저자로 내린다. */
+export async function acceptApplication(
+  app: Application,
+  role: 'coauthor' | 'corresponding' = 'coauthor',
+): Promise<{ error?: string }> {
+  if (role === 'corresponding') {
+    await supabase
+      .from(TABLES.members)
+      .update({ role: 'coauthor' })
+      .eq('paper_id', app.paperId)
+      .eq('role', 'corresponding')
+  }
   const { error: mErr } = await supabase.from(TABLES.members).insert({
     paper_id: app.paperId,
     user_id: app.applicantId ?? null,
     type: 'human',
-    role: 'coauthor',
+    role,
     name: app.applicantName,
     invite_email: app.applicantEmail ?? null,
   })

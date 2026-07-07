@@ -23,13 +23,13 @@ export default function Dashboard() {
   useEffect(() => {
     let alive = true
     setLoading(true)
-    loadPapers(user?.id)
+    loadPapers(user?.id, user?.email)
       .then((list) => alive && setPapers(list))
       .finally(() => alive && setLoading(false))
     return () => {
       alive = false
     }
-  }, [user?.id])
+  }, [user?.id, user?.email])
 
   const clusters = useMemo(() => ['전체', ...Array.from(new Set(papers.map((p) => p.cluster)))], [papers])
   const shown = filter === '전체' ? papers : papers.filter((p) => p.cluster === filter)
