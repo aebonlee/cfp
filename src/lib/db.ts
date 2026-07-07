@@ -21,6 +21,8 @@ interface PaperRow {
   source_file: string | null
   created_at: string
   recruiting?: boolean | null
+  target_journal?: string | null
+  deadline?: string | null
 }
 
 interface MemberRow {
@@ -42,6 +44,7 @@ function toMember(m: MemberRow): TeamMember {
     name: m.name,
     note: m.note ?? undefined,
     email: m.invite_email ?? undefined,
+    userId: m.user_id ?? undefined,
   }
 }
 
@@ -63,6 +66,8 @@ function toPaper(row: PaperRow, members: TeamMember[], viewerId?: string): Paper
     createdAt: (row.created_at ?? '').slice(0, 10),
     shared: viewerId ? row.owner_id !== viewerId : false,
     recruiting: !!row.recruiting,
+    targetJournal: row.target_journal ?? undefined,
+    deadline: row.deadline ?? undefined,
   }
 }
 
@@ -177,6 +182,8 @@ export async function createPaper(
       status: 'topic',
       seed: false,
       recruiting: input.recruiting ?? false,
+      target_journal: input.targetJournal ?? null,
+      deadline: input.deadline ?? null,
     })
     .select('*')
     .single()
@@ -207,6 +214,7 @@ interface AppRow {
   applicant_email: string | null
   message: string | null
   status: 'pending' | 'accepted' | 'rejected'
+  reject_reason?: string | null
   created_at: string
 }
 function toApp(r: AppRow): Application {
@@ -218,6 +226,7 @@ function toApp(r: AppRow): Application {
     applicantEmail: r.applicant_email ?? undefined,
     message: r.message ?? undefined,
     status: r.status,
+    rejectReason: r.reject_reason ?? undefined,
     createdAt: r.created_at,
   }
 }
@@ -285,8 +294,56 @@ export async function acceptApplication(
   return {}
 }
 
-export async function rejectApplication(id: string): Promise<void> {
-  await supabase.from(TABLES.applications).update({ status: 'rejected' }).eq('id', id)
+export async function rejectApplication(id: string, reason?: string): Promise<void> {
+  await supabase
+    .from(TABLES.applications)
+    .update({ status: 'rejected', reject_reason: reason?.trim() || null })
+    .eq('id', id)
+}
+
+/** 지원자가 대기중인 자기 신청을 철회(삭제) */
+export async function withdrawApplication(id: string): Promise<{ error?: string }> {
+  const { error } = await supabase.from(TABLES.applications).delete().eq('id', id)
+  return error ? { error: error.message } : {}
+}
+
+/** 내가 신청한 목록(논문 제목 포함) — 지원자용 '내 신청' 페이지 */
+export async function listMyApplications(userId: string): Promise<(Application & { paperTitle: string })[]> {
+  const { data } = await supabase
+    .from(TABLES.applications)
+    .select('*, paper:wp_papers(title)')
+    .eq('applicant_id', userId)
+    .order('created_at', { ascending: false })
+  return ((data ?? []) as (AppRow & { paper?: { title?: string } })[]).map((r) => ({
+    ...toApp(r),
+    paperTitle: r.paper?.title ?? '(삭제된 논문)',
+  }))
+}
+
+/** 헤더 알림용 집계: 내 논문에 온 대기 신청(주저자) + 내 신청의 처리 결과(지원자) */
+export async function notifications(
+  userId: string,
+): Promise<{ incoming: (Application & { paperTitle: string })[]; mineResolved: (Application & { paperTitle: string })[] }> {
+  // 내가 소유한 논문 id
+  const { data: myPapers } = await supabase.from(TABLES.papers).select('id, title').eq('owner_id', userId)
+  const titleById = new Map<string, string>((myPapers ?? []).map((p: { id: string; title: string }) => [p.id, p.title]))
+  const ids = [...titleById.keys()]
+
+  let incoming: (Application & { paperTitle: string })[] = []
+  if (ids.length > 0) {
+    const { data } = await supabase
+      .from(TABLES.applications)
+      .select('*')
+      .in('paper_id', ids)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+    incoming = ((data ?? []) as AppRow[]).map((r) => ({ ...toApp(r), paperTitle: titleById.get(r.paper_id) ?? '' }))
+  }
+
+  // 내 신청 중 처리된(수락/거절) 것
+  const mine = await listMyApplications(userId)
+  const mineResolved = mine.filter((a) => a.status !== 'pending')
+  return { incoming, mineResolved }
 }
 
 /** 팀원 전체 교체 + 상태 갱신 */

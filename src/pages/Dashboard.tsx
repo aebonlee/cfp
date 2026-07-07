@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
 import { loadPapers } from '../lib/papers'
 import { useAuth } from '../lib/auth'
+import { dday } from '../lib/dday'
 import { STATUS_LABEL, type Paper, type PaperStatus } from '../types'
 
 const STATUS_STYLE: Record<PaperStatus, string> = {
@@ -89,6 +90,7 @@ export default function Dashboard() {
 function PaperCard({ paper }: { paper: Paper }) {
   const humans = paper.members.filter((m) => m.type === 'human').length
   const ais = paper.members.filter((m) => m.type === 'ai').length
+  const dd = dday(paper.deadline)
   return (
     <Link
       to={`/paper/${paper.id}`}
@@ -96,7 +98,21 @@ function PaperCard({ paper }: { paper: Paper }) {
     >
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs font-medium text-ink-400">{paper.cluster}</span>
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          {dd && (
+            <span
+              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                dd.tone === 'over'
+                  ? 'bg-red-100 text-red-700'
+                  : dd.tone === 'warn'
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'bg-green-100 text-green-700'
+              }`}
+              title={`투고 마감일 ${paper.deadline}`}
+            >
+              {dd.label}
+            </span>
+          )}
           {paper.shared && (
             <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-semibold text-indigo-700">공유받음</span>
           )}
@@ -111,6 +127,9 @@ function PaperCard({ paper }: { paper: Paper }) {
       <h3 className="mt-3 break-words font-serif text-lg font-bold leading-snug group-hover:text-gold-600">{paper.title}</h3>
       <p className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-ink-500">{paper.summary}</p>
       <div className="mt-4 flex flex-wrap gap-1.5">
+        {paper.targetJournal && (
+          <span className="rounded bg-gold-500/10 px-2 py-0.5 text-xs font-medium text-gold-700">🎯 {paper.targetJournal}</span>
+        )}
         {paper.method && (
           <span className="rounded bg-ink-900/5 px-2 py-0.5 text-xs text-ink-600">{paper.method}</span>
         )}

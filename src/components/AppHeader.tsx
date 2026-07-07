@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { isAdmin } from '../lib/admin'
 import LoginModal from './LoginModal'
+import NotificationBell from './NotificationBell'
 
 export function Logo({ className = 'h-7 w-7' }: { className?: string }) {
   return (
@@ -44,6 +45,11 @@ export default function AppHeader() {
             <Link to="/new" className="hover:text-ink-900">
               새 논문
             </Link>
+            {user && (
+              <Link to="/my-applications" className="hover:text-ink-900">
+                내 신청
+              </Link>
+            )}
             {isAdmin(user?.email) && (
               <Link to="/admin" className="font-medium text-gold-600 hover:text-gold-700">
                 관리자
@@ -51,6 +57,7 @@ export default function AppHeader() {
             )}
             {user ? (
               <div className="flex items-center gap-3">
+                <NotificationBell />
                 <span className="hidden text-ink-700 sm:inline">{name}님</span>
                 <button
                   onClick={signOut}

@@ -77,6 +77,8 @@ export function createPaper(input: Partial<Paper> & { title: string }): Paper {
     members: [],
     seed: false,
     recruiting: input.recruiting ?? false,
+    targetJournal: input.targetJournal,
+    deadline: input.deadline,
     createdAt: new Date().toISOString().slice(0, 10),
   }
   upsertPaper(paper)

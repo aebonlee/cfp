@@ -73,8 +73,17 @@ export async function acceptApplication(
 ): Promise<{ error?: string }> {
   return db.acceptApplication(app, role)
 }
-export async function rejectApplication(id: string): Promise<void> {
-  return db.rejectApplication(id)
+export async function rejectApplication(id: string, reason?: string): Promise<void> {
+  return db.rejectApplication(id, reason)
+}
+export async function withdrawApplication(id: string): Promise<{ error?: string }> {
+  return db.withdrawApplication(id)
+}
+export async function loadMyApplicationList(userId: string) {
+  return db.listMyApplications(userId)
+}
+export async function loadNotifications(userId: string) {
+  return db.notifications(userId)
 }
 
 export async function loadSections(paperId: string, userId?: string): Promise<Record<string, string>> {

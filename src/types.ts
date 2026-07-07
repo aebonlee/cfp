@@ -20,6 +20,7 @@ export interface TeamMember {
   name: string
   note?: string
   email?: string // 사람 팀원 초대 이메일 (이 이메일로 로그인하면 공동저자 접근)
+  userId?: string // 연결된 계정 uuid (권한 판정용)
 }
 
 /** 논문 프로젝트 (주제 등록 단위) */
@@ -41,6 +42,8 @@ export interface Paper {
   shared?: boolean // 다른 사람이 나를 공동저자로 초대한 논문
   progress?: number // 완성도(%) — 채워진 섹션 비율
   recruiting?: boolean // 팀원 공개 모집 여부
+  targetJournal?: string // 목표 학술지/저널
+  deadline?: string // 투고 마감일 (YYYY-MM-DD)
 }
 
 /** 참고문헌 항목 */
@@ -60,6 +63,7 @@ export interface Application {
   applicantEmail?: string
   message?: string
   status: 'pending' | 'accepted' | 'rejected'
+  rejectReason?: string // 거절 사유 (주저자가 남김)
   createdAt: string
 }
 
@@ -73,6 +77,15 @@ export interface Comment {
   authorId?: string
   resolved: boolean
   createdAt: string
+}
+
+/** 팀·모집·게재 관리 권한: 제1저자/교신저자(및 소유자)만.
+ *  공동저자는 집필·코멘트만. 비로그인 로컬(단일 사용자)은 항상 허용. */
+export function canManagePaper(paper: Paper, userId?: string): boolean {
+  if (!userId) return true // 비로그인 로컬 단일 사용자
+  if (!paper.shared) return true // 논문 소유자(주로 제1저자)
+  const me = paper.members.find((m) => m.userId === userId)
+  return me?.role === 'first_author' || me?.role === 'corresponding'
 }
 
 export const ROLE_LABEL: Record<MemberRole, string> = {

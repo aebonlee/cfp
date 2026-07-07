@@ -13,6 +13,8 @@ export default function NewPaper() {
   const [title, setTitle] = useState('')
   const [summary, setSummary] = useState('')
   const [keywords, setKeywords] = useState('')
+  const [targetJournal, setTargetJournal] = useState('')
+  const [deadline, setDeadline] = useState('')
   const [presetId, setPreset] = useState<string>('')
   const [recruiting, setRecruiting] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -32,6 +34,8 @@ export default function NewPaper() {
         format,
         lang: preset?.lang ?? 'ko',
         recruiting,
+        targetJournal: targetJournal.trim() || undefined,
+        deadline: deadline || undefined,
       },
       user?.id,
     )
@@ -76,6 +80,25 @@ export default function NewPaper() {
               className="w-full rounded-lg border border-ink-200 px-4 py-3 outline-none focus:border-gold-500"
             />
           </Field>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="목표 학술지 / 저널">
+              <input
+                value={targetJournal}
+                onChange={(e) => setTargetJournal(e.target.value)}
+                placeholder="예: 교육공학연구, KCI 등재"
+                className="w-full rounded-lg border border-ink-200 px-4 py-3 outline-none focus:border-gold-500"
+              />
+            </Field>
+            <Field label="투고 마감일">
+              <input
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className="w-full rounded-lg border border-ink-200 px-4 py-3 text-ink-700 outline-none focus:border-gold-500"
+              />
+            </Field>
+          </div>
 
           <Field label="투고 양식 (저널 프리셋)">
             <div className="grid gap-3 sm:grid-cols-2">

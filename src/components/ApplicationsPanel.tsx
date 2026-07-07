@@ -6,6 +6,8 @@ export default function ApplicationsPanel({ paper, onChange }: { paper: Paper; o
   const [apps, setApps] = useState<Application[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
+  const [rejectFor, setRejectFor] = useState<string | null>(null)
+  const [reason, setReason] = useState('')
 
   function reload() {
     loadApplications(paper.id)
@@ -37,8 +39,10 @@ export default function ApplicationsPanel({ paper, onChange }: { paper: Paper; o
   }
   async function reject(a: Application) {
     setBusy(a.id)
-    await rejectApplication(a.id)
+    await rejectApplication(a.id, reason)
     setBusy(null)
+    setRejectFor(null)
+    setReason('')
     reload()
   }
 
@@ -69,30 +73,56 @@ export default function ApplicationsPanel({ paper, onChange }: { paper: Paper; o
                 </div>
                 {a.message && <p className="mt-1 break-words text-sm text-ink-600">{a.message}</p>}
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => accept(a, 'coauthor')}
-                  disabled={busy === a.id}
-                  className="rounded-full bg-ink-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-ink-700 disabled:opacity-40"
-                >
-                  공동저자로 수락
-                </button>
-                <button
-                  onClick={() => accept(a, 'corresponding')}
-                  disabled={busy === a.id}
-                  title={hasCorresponding ? '기존 교신저자는 공동저자로 조정됩니다' : undefined}
-                  className="rounded-full border border-gold-500 bg-gold-500/10 px-4 py-1.5 text-sm font-medium text-gold-700 hover:bg-gold-500/20 disabled:opacity-40"
-                >
-                  교신저자로 수락
-                </button>
-                <button
-                  onClick={() => reject(a)}
-                  disabled={busy === a.id}
-                  className="rounded-full border border-ink-300 px-4 py-1.5 text-sm text-ink-600 hover:border-red-400 hover:text-red-500 disabled:opacity-40"
-                >
-                  거절
-                </button>
-              </div>
+              {rejectFor === a.id ? (
+                <div className="w-full space-y-2">
+                  <input
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder="거절 사유 (지원자에게 전달, 선택)"
+                    className="w-full rounded-lg border border-ink-200 px-3 py-2 text-sm outline-none focus:border-red-400"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => reject(a)}
+                      disabled={busy === a.id}
+                      className="rounded-full bg-red-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-40"
+                    >
+                      거절 확정
+                    </button>
+                    <button
+                      onClick={() => { setRejectFor(null); setReason('') }}
+                      className="rounded-full border border-ink-300 px-4 py-1.5 text-sm text-ink-600"
+                    >
+                      취소
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => accept(a, 'coauthor')}
+                    disabled={busy === a.id}
+                    className="rounded-full bg-ink-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-ink-700 disabled:opacity-40"
+                  >
+                    공동저자로 수락
+                  </button>
+                  <button
+                    onClick={() => accept(a, 'corresponding')}
+                    disabled={busy === a.id}
+                    title={hasCorresponding ? '기존 교신저자는 공동저자로 조정됩니다' : undefined}
+                    className="rounded-full border border-gold-500 bg-gold-500/10 px-4 py-1.5 text-sm font-medium text-gold-700 hover:bg-gold-500/20 disabled:opacity-40"
+                  >
+                    교신저자로 수락
+                  </button>
+                  <button
+                    onClick={() => { setRejectFor(a.id); setReason('') }}
+                    disabled={busy === a.id}
+                    className="rounded-full border border-ink-300 px-4 py-1.5 text-sm text-ink-600 hover:border-red-400 hover:text-red-500 disabled:opacity-40"
+                  >
+                    거절
+                  </button>
+                </div>
+              )}
             </li>
           ))}
         </ul>

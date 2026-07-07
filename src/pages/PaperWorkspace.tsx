@@ -13,7 +13,8 @@ import { getPresetId, setPresetId } from '../lib/store'
 import { PRESETS, findPreset } from '../data/presets'
 import { resolveSections } from '../data/sections'
 import { useAuth } from '../lib/auth'
-import { FORMAT_LABEL, ROLE_LABEL, STATUS_LABEL, type Paper, type TeamMember } from '../types'
+import { dday } from '../lib/dday'
+import { FORMAT_LABEL, ROLE_LABEL, STATUS_LABEL, canManagePaper, type Paper, type TeamMember } from '../types'
 
 export default function PaperWorkspace() {
   const { id } = useParams()
@@ -70,6 +71,8 @@ export default function PaperWorkspace() {
     user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '이애본'
   const preset = findPreset(presetId)
   const sections = resolveSections(preset?.format ?? paper.format, preset?.sections)
+  const canManage = canManagePaper(paper, user?.id)
+  const dd = dday(paper.deadline)
 
   return (
     <div className="min-h-screen bg-ink-50">
@@ -97,7 +100,21 @@ export default function PaperWorkspace() {
             ) : (
               <span className="rounded-full bg-ink-100 px-3 py-1 text-xs text-ink-500">비공개</span>
             )}
-            {!paper.shared && (
+            {dd && (
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  dd.tone === 'over'
+                    ? 'bg-red-100 text-red-700'
+                    : dd.tone === 'warn'
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-green-100 text-green-700'
+                }`}
+                title={`투고 마감일 ${paper.deadline}`}
+              >
+                마감 {dd.label}
+              </span>
+            )}
+            {canManage && (
               <button
                 onClick={async () => {
                   const next = !paper.recruiting
@@ -141,6 +158,11 @@ export default function PaperWorkspace() {
             {paper.method && (
               <span className="rounded-lg border border-ink-200 px-3 py-1 text-xs text-ink-600">
                 방법론 · {paper.method}
+              </span>
+            )}
+            {paper.targetJournal && (
+              <span className="rounded-lg border border-gold-300 bg-gold-500/10 px-3 py-1 text-xs font-medium text-gold-700">
+                목표 저널 · {paper.targetJournal}
               </span>
             )}
             {paper.keywords.map((k) => (
@@ -196,7 +218,27 @@ export default function PaperWorkspace() {
               {!paper.shared && user?.id && (
                 <ApplicationsPanel paper={paper} onChange={async () => setPaper(await loadPaper(paper.id, user?.id))} />
               )}
-              <TeamBuilder initial={paper.members} onSave={handleSaveTeam} />
+              {canManage ? (
+                <TeamBuilder initial={paper.members} onSave={handleSaveTeam} />
+              ) : (
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-dashed border-ink-300 bg-ink-50 p-4 text-sm text-ink-500">
+                    팀 구성 변경은 <b>제1저자·교신저자</b>만 할 수 있습니다. 공동저자는 집필·코멘트에 참여하세요.
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {paper.members.map((m) => (
+                      <span
+                        key={m.id}
+                        className={`rounded-full px-3 py-1 text-xs ${
+                          m.type === 'ai' ? 'bg-gold-500 font-medium text-ink-900' : 'bg-ink-900 text-white'
+                        }`}
+                      >
+                        {m.name || ROLE_LABEL[m.role]} · {ROLE_LABEL[m.role]}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           ) : tab === 'assist' ? (
             <AssistPanel paper={paper} userId={user?.id} sections={sections} />
