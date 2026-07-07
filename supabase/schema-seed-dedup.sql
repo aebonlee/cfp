@@ -36,3 +36,12 @@ select p.owner_id, count(*) as seed_copies
 
 -- 3) 남은 시드는 모두 공개 모집 상태 보장(선택)
 -- update public.wp_papers set recruiting = true where seed = true;
+
+-- ============================================================
+-- [별건] 교신저자 수락 흐름 테스트로 생성한 신청 행 정리
+--   wp_applications 에는 DELETE RLS 정책이 없어 클라이언트로 못 지우므로
+--   여기(서비스 롤)서 제거. 테스트 팀원(members)은 이미 삭제됨.
+-- ============================================================
+delete from public.wp_applications
+ where applicant_email in ('test-delete@example.com', 'test2-delete@example.com')
+    or applicant_name like '테스트지원자%';
